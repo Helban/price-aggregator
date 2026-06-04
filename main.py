@@ -17,12 +17,12 @@ async def search_all(query: str) -> list[Product]:
     scrapers = [
         # AllegroScraper(),  # blocked by DataDome — to be resolved
         CeneoScraper(),
-        OlxScraper(),
+        OlxScraper(fetch_images=False),
         SprzedajemyScraper(),
     ]
     try:
         results = await asyncio.gather(
-            *(s.search(query) for s in scrapers),
+            *(s.search(query, limit=30) for s in scrapers),
             return_exceptions=True,
         )
     finally:

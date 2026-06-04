@@ -26,24 +26,56 @@
       padding: 28px 20px 60px;
     }
 
-    header { max-width: 1200px; margin: 0 auto 20px; }
+    header { max-width: 1200px; margin: 0 auto 16px; }
     header h1 { font-size: 1.6rem; font-weight: 700; }
     header h1 em { font-style: normal; color: #2563eb; }
     header p { color: var(--muted); margin-top: 4px; font-size: 0.9rem; }
 
-    .filters {
+    .toolbar {
       max-width: 1200px; margin: 0 auto 20px;
-      display: flex; gap: 8px; flex-wrap: wrap;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     }
+
+    .toolbar-group {
+      display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+    }
+
+    .toolbar-label {
+      font-size: 0.75rem; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+
+    .divider {
+      width: 1px; height: 24px; background: #d4d4d8; flex-shrink: 0;
+    }
+
+    /* source filter buttons */
     .filter-btn {
-      padding: 5px 14px; border-radius: 20px;
+      padding: 5px 13px; border-radius: 20px;
       border: 1.5px solid #d4d4d8; background: var(--card);
       cursor: pointer; font-size: 0.8rem; font-weight: 500;
       transition: background .12s, border-color .12s, color .12s;
+      user-select: none;
     }
-    .filter-btn:hover, .filter-btn.active {
+    .filter-btn:hover { border-color: #a1a1aa; }
+    .filter-btn.active {
       background: var(--text); border-color: var(--text); color: #fff;
     }
+    .filter-btn.source-active-Ceneo       { background: var(--ceneo);       border-color: var(--ceneo);       color: #fff; }
+    .filter-btn.source-active-OLX         { background: var(--olx);         border-color: var(--olx);         color: #fff; }
+    .filter-btn.source-active-Sprzedajemy { background: var(--sprzedajemy); border-color: var(--sprzedajemy); color: #fff; }
+    .filter-btn.source-active-Allegro     { background: var(--allegro);     border-color: var(--allegro);     color: #fff; }
+
+    /* sort buttons */
+    .sort-btn {
+      padding: 5px 13px; border-radius: 20px;
+      border: 1.5px solid #d4d4d8; background: var(--card);
+      cursor: pointer; font-size: 0.8rem; font-weight: 500;
+      transition: background .12s, border-color .12s, color .12s;
+      user-select: none;
+    }
+    .sort-btn:hover { border-color: #a1a1aa; }
+    .sort-btn.active { background: var(--text); border-color: var(--text); color: #fff; }
 
     .grid {
       max-width: 1200px; margin: 0 auto;
@@ -59,76 +91,41 @@
       transition: transform .15s, box-shadow .15s;
     }
     .card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.10); }
+    .card[hidden] { display: none !important; }
 
-    /* ── image carousel ── */
-    .carousel {
-      position: relative; width: 100%; height: 170px;
-      background: #fafafa; overflow: hidden;
-    }
-    .carousel-track {
-      display: flex; height: 100%;
-      transition: transform .25s ease;
-    }
-    .carousel-track img {
-      flex-shrink: 0; width: 100%; height: 100%;
-      object-fit: contain; padding: 10px;
-    }
-    .carousel-placeholder {
-      flex-shrink: 0; width: 100%; height: 100%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2.2rem; color: #ccc;
-    }
+    /* carousel */
+    .carousel { position: relative; width: 100%; height: 170px; background: #fafafa; overflow: hidden; }
+    .carousel-track { display: flex; height: 100%; transition: transform .25s ease; }
+    .carousel-track img { flex-shrink: 0; width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+    .carousel-placeholder { flex-shrink: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: #ccc; }
     .carousel-btn {
       position: absolute; top: 50%; transform: translateY(-50%);
       background: rgba(0,0,0,.35); color: #fff; border: none;
       width: 26px; height: 26px; border-radius: 50%;
-      font-size: 0.75rem; cursor: pointer; display: flex;
-      align-items: center; justify-content: center;
+      font-size: 0.75rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       opacity: 0; transition: opacity .15s;
     }
     .carousel:hover .carousel-btn { opacity: 1; }
     .carousel-btn.prev { left: 5px; }
     .carousel-btn.next { right: 5px; }
-    .carousel-dots {
-      position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 4px;
-    }
-    .carousel-dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: rgba(0,0,0,.25); transition: background .15s;
-    }
+    .carousel-dots { position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; }
+    .carousel-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,.25); transition: background .15s; }
     .carousel-dot.active { background: rgba(0,0,0,.65); }
 
-    /* ── card body ── */
-    .card-body {
-      padding: 12px; flex: 1;
-      display: flex; flex-direction: column; gap: 7px;
-    }
-    .badge {
-      font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .06em; color: #fff; padding: 2px 8px;
-      border-radius: 4px; align-self: flex-start;
-    }
+    .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; gap: 7px; }
+    .badge { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #fff; padding: 2px 8px; border-radius: 4px; align-self: flex-start; }
     .badge-Allegro     { background: var(--allegro); }
     .badge-Ceneo       { background: var(--ceneo); }
     .badge-OLX         { background: var(--olx); }
     .badge-Sprzedajemy { background: var(--sprzedajemy); }
 
-    .card-name {
-      font-size: 0.82rem; line-height: 1.4; flex: 1;
-      display: -webkit-box; -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical; overflow: hidden;
-    }
+    .card-name { font-size: 0.82rem; line-height: 1.4; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
     .card-price { font-size: 1.25rem; font-weight: 800; color: #dc2626; }
     .card-meta { font-size: 0.73rem; color: var(--muted); line-height: 1.5; }
 
     .card-footer { padding: 0 12px 12px; }
-    .card-footer a {
-      display: block; text-align: center; padding: 8px;
-      background: #f4f4f5; border-radius: 6px;
-      font-size: 0.8rem; font-weight: 600; color: var(--text);
-      text-decoration: none; transition: background .12s;
-    }
+    .card-footer a { display: block; text-align: center; padding: 8px; background: #f4f4f5; border-radius: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text); text-decoration: none; transition: background .12s; }
     .card-footer a:hover { background: #e4e4e7; }
 
     .no-results { max-width: 600px; margin: 60px auto; text-align: center; color: var(--muted); }
@@ -138,21 +135,33 @@
 
 <header>
   <h1>Wyniki dla: <em>{{ query }}</em></h1>
-  <p>{{ products | length }} ofert · sortowane od najtańszych</p>
+  <p id="count-label">{{ products | length }} ofert</p>
 </header>
 
 {% if products %}
-<div class="filters">
-  <button class="filter-btn active" onclick="filter('all', this)">Wszystkie</button>
-  {% for src in sources %}
-  <button class="filter-btn" onclick="filter('{{ src }}', this)">{{ src }}</button>
-  {% endfor %}
+<div class="toolbar">
+  <div class="toolbar-group">
+    <span class="toolbar-label">Źródło</span>
+    {% for src in sources %}
+    <button class="filter-btn source-active-{{ src }}" data-source="{{ src }}" onclick="toggleSource('{{ src }}', this)">
+      {{ src }}
+    </button>
+    {% endfor %}
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="toolbar-group">
+    <span class="toolbar-label">Sortuj</span>
+    <button class="sort-btn active" data-sort="price-asc"  onclick="setSort('price-asc',  this)">Cena ↑</button>
+    <button class="sort-btn"        data-sort="price-desc" onclick="setSort('price-desc', this)">Cena ↓</button>
+  </div>
 </div>
 
 <div class="grid" id="grid">
   {% for p in products %}
   {% set images = p.image_urls if p.image_urls else ([p.image_url] if p.image_url else []) %}
-  <div class="card" data-source="{{ p.source }}">
+  <div class="card" data-source="{{ p.source }}" data-price="{{ p.price }}">
 
     <div class="carousel" data-index="0">
       <div class="carousel-track">
@@ -166,12 +175,10 @@
         {% endif %}
       </div>
       {% if images | length > 1 %}
-      <button class="carousel-btn prev" onclick="slide(this, -1)">&#8249;</button>
-      <button class="carousel-btn next" onclick="slide(this, +1)">&#8250;</button>
+      <button class="carousel-btn prev" onclick="slide(this,-1)">&#8249;</button>
+      <button class="carousel-btn next" onclick="slide(this,+1)">&#8250;</button>
       <div class="carousel-dots">
-        {% for _ in images %}
-        <div class="carousel-dot {% if loop.first %}active{% endif %}"></div>
-        {% endfor %}
+        {% for _ in images %}<div class="carousel-dot {% if loop.first %}active{% endif %}"></div>{% endfor %}
       </div>
       {% endif %}
     </div>
@@ -203,22 +210,64 @@
 {% endif %}
 
 <script>
-  function filter(source, btn) {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  const sources  = new Set({{ sources | tojson }});
+  const active   = new Set(sources);
+  let   sortMode = 'price-asc';
+
+  function toggleSource(src, btn) {
+    if (active.has(src)) {
+      if (active.size === 1) return; // keep at least one
+      active.delete(src);
+      btn.classList.remove('source-active-' + src);
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      btn.classList.remove('source-active-' + src);
+    } else {
+      active.add(src);
+      btn.classList.add('source-active-' + src);
+    }
+    applyFiltersAndSort();
+  }
+
+  function setSort(mode, btn) {
+    sortMode = mode;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    document.querySelectorAll('.card').forEach(card => {
-      card.style.display = (source === 'all' || card.dataset.source === source) ? '' : 'none';
+    applyFiltersAndSort();
+  }
+
+  function applyFiltersAndSort() {
+    const grid  = document.getElementById('grid');
+    const cards = [...grid.querySelectorAll('.card')];
+
+    // sort
+    cards.sort((a, b) => {
+      const pa = parseFloat(a.dataset.price);
+      const pb = parseFloat(b.dataset.price);
+      return sortMode === 'price-asc' ? pa - pb : pb - pa;
     });
+    cards.forEach(c => grid.appendChild(c));
+
+    // filter + count
+    let visible = 0;
+    cards.forEach(c => {
+      const show = active.has(c.dataset.source);
+      c.hidden = !show;
+      if (show) visible++;
+    });
+
+    document.getElementById('count-label').textContent =
+      visible + ' ofert' + (visible !== cards.length ? ' (z ' + cards.length + ')' : '');
   }
 
   function slide(btn, dir) {
     const carousel = btn.closest('.carousel');
     const track    = carousel.querySelector('.carousel-track');
     const items    = track.children.length;
-    let   idx      = parseInt(carousel.dataset.index || 0) + dir;
-    idx = (idx + items) % items;
+    let   idx      = (parseInt(carousel.dataset.index || 0) + dir + items) % items;
     carousel.dataset.index = idx;
-    track.style.transform = `translateX(-${idx * 100}%)`;
+    track.style.transform  = `translateX(-${idx * 100}%)`;
     carousel.querySelectorAll('.carousel-dot').forEach((d, i) =>
       d.classList.toggle('active', i === idx)
     );
