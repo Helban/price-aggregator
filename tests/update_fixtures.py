@@ -23,6 +23,7 @@ SOURCES = [
 
 
 async def main() -> None:
+    FIXTURES.mkdir(parents=True, exist_ok=True)
     async with httpx.AsyncClient(headers=HEADERS, follow_redirects=True, timeout=20.0) as c:
         for filename, url in SOURCES:
             print(f"Fetching {url} ...", end=" ", flush=True)
