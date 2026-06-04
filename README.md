@@ -1,5 +1,7 @@
 # Polish Price Aggregator
 
+[![Tests](https://github.com/TWOJ_LOGIN/price-aggregator/actions/workflows/tests.yml/badge.svg)](https://github.com/TWOJ_LOGIN/price-aggregator/actions/workflows/tests.yml)
+
 Search for a product across multiple Polish marketplaces simultaneously and view results in a clean browser UI.
 
 **Live sources:** Ceneo · OLX · Sprzedajemy.pl
