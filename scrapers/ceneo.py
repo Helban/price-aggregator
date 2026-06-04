@@ -53,7 +53,7 @@ class CeneoScraper(ScraperBase):
         )
 
         img = row.select_one(".cat-prod-row__foto img")
-        image_url = img["src"] if img else None
+        image_url = img.get("src") if img else None
         if image_url and image_url.startswith("//"):
             image_url = "https:" + image_url
 

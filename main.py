@@ -27,7 +27,10 @@ async def search_all(query: str) -> list[Product]:
         )
     finally:
         for s in scrapers:
-            await s.close()
+            try:
+                await s.close()
+            except Exception:
+                pass
 
     products: list[Product] = []
     for r in results:
@@ -40,7 +43,10 @@ async def search_all(query: str) -> list[Product]:
 
 
 def render_results(query: str, products: list[Product]) -> str:
-    env = Environment(loader=FileSystemLoader(Path(__file__).parent / "templates"))
+    env = Environment(
+        loader=FileSystemLoader(Path(__file__).parent / "templates"),
+        autoescape=True,
+    )
     template = env.get_template("results.html")
     sources = sorted({p.source for p in products})
     return template.render(query=query, products=products, sources=sources)

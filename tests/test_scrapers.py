@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+from scrapers.base import ScraperBase
 from scrapers.ceneo import CeneoScraper
 from scrapers.olx import OlxScraper
 from scrapers.sprzedajemy import SprzedajemyScraper
@@ -125,19 +126,21 @@ class TestSprzedajemyParser:
         assert len(with_img) > 0
 
 
-class TestOlxPriceParser:
-    def setup_method(self):
-        self.scraper = OlxScraper()
+class TestPolishPriceParser:
+    """Tests for ScraperBase.parse_polish_price — shared across all scrapers."""
 
     @pytest.mark.parametrize("raw,expected", [
-        ("999 zł", Decimal("999")),
-        ("1 234 zł", Decimal("1234")),
-        ("14\xa0999 zł", Decimal("14999")),
-        ("1 234,99 zł", Decimal("1234.99")),
+        ("999 zł",        Decimal("999")),
+        ("1 234 zł",      Decimal("1234")),
+        ("14\xa0999 zł",  Decimal("14999")),
+        ("1 234,99 zł",   Decimal("1234.99")),
+        ("1.234,99 zł",   Decimal("1234.99")),   # dot-thousands + comma-decimal
+        ("14,99 zł",      Decimal("14.99")),
+        ("0 zł",          Decimal("0")),
     ])
     def test_valid_prices(self, raw, expected):
-        assert self.scraper._parse_price(raw) == expected
+        assert ScraperBase.parse_polish_price(raw) == expected
 
     @pytest.mark.parametrize("raw", ["Zamień", "Negocjuj", "Za darmo", ""])
     def test_non_numeric_returns_none(self, raw):
-        assert self.scraper._parse_price(raw) is None
+        assert ScraperBase.parse_polish_price(raw) is None

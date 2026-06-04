@@ -62,7 +62,7 @@ class OlxScraper(ScraperBase):
         name = title_el.get_text(strip=True)
 
         price_el = card.find(attrs={"data-testid": "ad-price"})
-        price = self._parse_price(price_el.get_text(strip=True) if price_el else "")
+        price = self.parse_polish_price(price_el.get_text(strip=True) if price_el else "")
         if price is None:
             return None
 
@@ -118,19 +118,6 @@ class OlxScraper(ScraperBase):
             return None
         return src
 
-    @staticmethod
-    def _parse_price(raw: str) -> Optional[Decimal]:
-        cleaned = (
-            raw.replace("zł", "")
-            .replace("\xa0", "")
-            .replace(" ", "")
-            .replace(",", ".")
-            .strip()
-        )
-        try:
-            return Decimal(cleaned)
-        except InvalidOperation:
-            return None  # "Zamień", "Negocjuj", "Za darmo", etc.
 
     @staticmethod
     def _parse_location(raw: Optional[str]) -> Optional[str]:

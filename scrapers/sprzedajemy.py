@@ -32,7 +32,6 @@ class SprzedajemyScraper(ScraperBase):
             params={
                 "schm2": "hp",
                 "inp_text[v]": query,
-                "inp_category_id": "5",
                 "catCode": "",
             },
         )
@@ -59,7 +58,7 @@ class SprzedajemyScraper(ScraperBase):
         name = title_el.get_text(strip=True)
 
         price_el = article.select_one(".price")
-        price = self._parse_price(price_el.get_text(strip=True) if price_el else "")
+        price = self.parse_polish_price(price_el.get_text(strip=True) if price_el else "")
         if price is None:
             return None
 
@@ -78,19 +77,6 @@ class SprzedajemyScraper(ScraperBase):
             location=location,
         )
 
-    @staticmethod
-    def _parse_price(raw: str) -> Optional[Decimal]:
-        cleaned = (
-            raw.replace("zł", "")
-            .replace("\xa0", "")
-            .replace(" ", "")
-            .replace(",", ".")
-            .strip()
-        )
-        try:
-            return Decimal(cleaned)
-        except InvalidOperation:
-            return None
 
     async def close(self) -> None:
         await self._client.aclose()
