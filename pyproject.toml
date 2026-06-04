@@ -1,0 +1,14 @@
+[project]
+name = "price-aggregator"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx",
+    "playwright",
+    "beautifulsoup4",
+    "lxml",
+    "jinja2",
+    "python-dotenv",
+    "pandas",
+    "openpyxl",
+]
