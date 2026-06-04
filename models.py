@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional
 
@@ -10,6 +10,7 @@ class Product:
     url: str
     source: str
     image_url: Optional[str] = None
+    image_urls: list[str] = field(default_factory=list)  # multiple images (e.g. OLX gallery)
     condition: Optional[str] = None   # 'NEW' | 'USED' | None
     seller: Optional[str] = None
     shipping_price: Optional[Decimal] = None

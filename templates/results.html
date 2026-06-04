@@ -26,154 +26,112 @@
       padding: 28px 20px 60px;
     }
 
-    header {
-      max-width: 1200px;
-      margin: 0 auto 20px;
-    }
-
+    header { max-width: 1200px; margin: 0 auto 20px; }
     header h1 { font-size: 1.6rem; font-weight: 700; }
     header h1 em { font-style: normal; color: #2563eb; }
     header p { color: var(--muted); margin-top: 4px; font-size: 0.9rem; }
 
     .filters {
-      max-width: 1200px;
-      margin: 0 auto 20px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+      max-width: 1200px; margin: 0 auto 20px;
+      display: flex; gap: 8px; flex-wrap: wrap;
     }
-
     .filter-btn {
-      padding: 5px 14px;
-      border-radius: 20px;
-      border: 1.5px solid #d4d4d8;
-      background: var(--card);
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 500;
+      padding: 5px 14px; border-radius: 20px;
+      border: 1.5px solid #d4d4d8; background: var(--card);
+      cursor: pointer; font-size: 0.8rem; font-weight: 500;
       transition: background .12s, border-color .12s, color .12s;
     }
-
-    .filter-btn:hover,
-    .filter-btn.active {
-      background: var(--text);
-      border-color: var(--text);
-      color: #fff;
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--text); border-color: var(--text); color: #fff;
     }
 
     .grid {
-      max-width: 1200px;
-      margin: 0 auto;
+      max-width: 1200px; margin: 0 auto;
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
       gap: 16px;
     }
 
     .card {
-      background: var(--card);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,.07);
-      display: flex;
-      flex-direction: column;
+      background: var(--card); border-radius: var(--radius);
+      overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.07);
+      display: flex; flex-direction: column;
       transition: transform .15s, box-shadow .15s;
     }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.10); }
 
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 18px rgba(0,0,0,.10);
+    /* ── image carousel ── */
+    .carousel {
+      position: relative; width: 100%; height: 170px;
+      background: #fafafa; overflow: hidden;
     }
-
-    .card-thumb {
-      width: 100%;
-      height: 170px;
-      object-fit: contain;
-      background: #fafafa;
-      padding: 10px;
+    .carousel-track {
+      display: flex; height: 100%;
+      transition: transform .25s ease;
     }
-
-    .card-thumb-placeholder {
-      width: 100%;
-      height: 170px;
-      background: #f1f1f1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.2rem;
-      color: #ccc;
+    .carousel-track img {
+      flex-shrink: 0; width: 100%; height: 100%;
+      object-fit: contain; padding: 10px;
     }
+    .carousel-placeholder {
+      flex-shrink: 0; width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; color: #ccc;
+    }
+    .carousel-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(0,0,0,.35); color: #fff; border: none;
+      width: 26px; height: 26px; border-radius: 50%;
+      font-size: 0.75rem; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .15s;
+    }
+    .carousel:hover .carousel-btn { opacity: 1; }
+    .carousel-btn.prev { left: 5px; }
+    .carousel-btn.next { right: 5px; }
+    .carousel-dots {
+      position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 4px;
+    }
+    .carousel-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: rgba(0,0,0,.25); transition: background .15s;
+    }
+    .carousel-dot.active { background: rgba(0,0,0,.65); }
 
+    /* ── card body ── */
     .card-body {
-      padding: 12px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
+      padding: 12px; flex: 1;
+      display: flex; flex-direction: column; gap: 7px;
     }
-
     .badge {
-      font-size: 0.65rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: #fff;
-      padding: 2px 8px;
-      border-radius: 4px;
-      align-self: flex-start;
+      font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: #fff; padding: 2px 8px;
+      border-radius: 4px; align-self: flex-start;
     }
-
     .badge-Allegro     { background: var(--allegro); }
     .badge-Ceneo       { background: var(--ceneo); }
     .badge-OLX         { background: var(--olx); }
     .badge-Sprzedajemy { background: var(--sprzedajemy); }
 
     .card-name {
-      font-size: 0.82rem;
-      line-height: 1.4;
-      flex: 1;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      font-size: 0.82rem; line-height: 1.4; flex: 1;
+      display: -webkit-box; -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical; overflow: hidden;
     }
+    .card-price { font-size: 1.25rem; font-weight: 800; color: #dc2626; }
+    .card-meta { font-size: 0.73rem; color: var(--muted); line-height: 1.5; }
 
-    .card-price {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: #dc2626;
-    }
-
-    .card-meta {
-      font-size: 0.73rem;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .card-footer {
-      padding: 0 12px 12px;
-    }
-
+    .card-footer { padding: 0 12px 12px; }
     .card-footer a {
-      display: block;
-      text-align: center;
-      padding: 8px;
-      background: #f4f4f5;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text);
-      text-decoration: none;
-      transition: background .12s;
+      display: block; text-align: center; padding: 8px;
+      background: #f4f4f5; border-radius: 6px;
+      font-size: 0.8rem; font-weight: 600; color: var(--text);
+      text-decoration: none; transition: background .12s;
     }
-
     .card-footer a:hover { background: #e4e4e7; }
 
-    .no-results {
-      max-width: 600px;
-      margin: 60px auto;
-      text-align: center;
-      color: var(--muted);
-    }
+    .no-results { max-width: 600px; margin: 60px auto; text-align: center; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -193,14 +151,30 @@
 
 <div class="grid" id="grid">
   {% for p in products %}
+  {% set images = p.image_urls if p.image_urls else ([p.image_url] if p.image_url else []) %}
   <div class="card" data-source="{{ p.source }}">
 
-    {% if p.image_url %}
-    <img class="card-thumb" src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy"
-         onerror="this.outerHTML='<div class=card-thumb-placeholder>🛒</div>'">
-    {% else %}
-    <div class="card-thumb-placeholder">🛒</div>
-    {% endif %}
+    <div class="carousel" data-index="0">
+      <div class="carousel-track">
+        {% if images %}
+          {% for img_url in images %}
+          <img src="{{ img_url }}" alt="{{ p.name }}" loading="lazy"
+               onerror="this.style.display='none'">
+          {% endfor %}
+        {% else %}
+          <div class="carousel-placeholder">🛒</div>
+        {% endif %}
+      </div>
+      {% if images | length > 1 %}
+      <button class="carousel-btn prev" onclick="slide(this, -1)">&#8249;</button>
+      <button class="carousel-btn next" onclick="slide(this, +1)">&#8250;</button>
+      <div class="carousel-dots">
+        {% for _ in images %}
+        <div class="carousel-dot {% if loop.first %}active{% endif %}"></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
 
     <div class="card-body">
       <span class="badge badge-{{ p.source }}">{{ p.source }}</span>
@@ -235,6 +209,19 @@
     document.querySelectorAll('.card').forEach(card => {
       card.style.display = (source === 'all' || card.dataset.source === source) ? '' : 'none';
     });
+  }
+
+  function slide(btn, dir) {
+    const carousel = btn.closest('.carousel');
+    const track    = carousel.querySelector('.carousel-track');
+    const items    = track.children.length;
+    let   idx      = parseInt(carousel.dataset.index || 0) + dir;
+    idx = (idx + items) % items;
+    carousel.dataset.index = idx;
+    track.style.transform = `translateX(-${idx * 100}%)`;
+    carousel.querySelectorAll('.carousel-dot').forEach((d, i) =>
+      d.classList.toggle('active', i === idx)
+    );
   }
 </script>
 
