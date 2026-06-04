@@ -54,7 +54,7 @@ class AllegroScraper(ScraperBase):
     async def _device_flow(self) -> dict:
         resp = await self._client.post(
             _DEVICE_URL,
-            data={"client_id": ALLEGRO_CLIENT_ID},
+            params={"client_id": ALLEGRO_CLIENT_ID},
             headers={"Authorization": f"Basic {self._basic_auth()}"},
         )
         if not resp.is_success:
