@@ -1,0 +1,88 @@
+# Polish Price Aggregator
+
+Search for a product across multiple Polish marketplaces simultaneously and view results in a clean browser UI.
+
+**Live sources:** Ceneo · OLX · Sprzedajemy.pl
+
+## Demo
+
+```
+python main.py "laptop lenovo"
+```
+
+Opens a local HTML page with results sorted by price, filterable by source, with image carousels for OLX listings.
+
+![screenshot placeholder]
+
+## Features
+
+- Parallel async scraping — all sources fetched simultaneously with `asyncio.gather`
+- Plugin architecture — each scraper is an independent class inheriting from `ScraperBase`
+- Image carousel — OLX listings fetch detail pages in parallel to collect all photos
+- Client-side filtering and sorting — toggle sources, sort by price asc/desc, live result count
+- Fixture-based tests — parsers tested against real captured HTML, not mocked HTTP
+
+## Stack
+
+- **Python 3.14** · asyncio · httpx · BeautifulSoup · Jinja2
+- **Playwright** (Allegro, when unblocked)
+- **pytest** for parser and model tests
+
+## Setup
+
+```bash
+git clone <repo>
+cd price_aggregator
+
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt  # or: pip install httpx playwright beautifulsoup4 lxml jinja2 python-dotenv
+
+# Allegro API (optional — see Known Limitations below)
+cp .env.example .env
+# fill in ALLEGRO_CLIENT_ID and ALLEGRO_CLIENT_SECRET
+```
+
+## Usage
+
+```bash
+python main.py "iphone 15"
+python main.py "hulajnoga elektryczna vsett"
+```
+
+## Running tests
+
+```bash
+pytest
+
+# Refresh HTML fixtures after a site layout change:
+python tests/update_fixtures.py
+```
+
+## Architecture
+
+```
+main.py               # entry point: asyncio.gather → Jinja2 render → webbrowser.open
+models.py             # Product dataclass — single shared model across all scrapers
+scrapers/
+  base.py             # ScraperBase ABC
+  ceneo.py            # httpx + BeautifulSoup
+  olx.py              # httpx + BeautifulSoup, parallel image enrichment
+  sprzedajemy.py      # httpx + BeautifulSoup
+  allegro.py          # Playwright (see Known Limitations)
+templates/
+  results.html        # Jinja2 + vanilla JS (filtering, sorting, carousel)
+tests/
+  fixtures/           # real HTML snapshots used by parser tests
+  update_fixtures.py  # re-captures fixtures from live sites
+```
+
+Adding a new scraper: subclass `ScraperBase`, implement `search()`, add to the list in `main.py`.
+
+## Known Limitations
+
+**Allegro** is protected by [DataDome](https://datadome.co/) bot detection.
+The following approaches were tried and blocked: Playwright Chromium/Firefox headless,
+Camoufox, Patchright, nodriver. The official REST API (`/offers/listing`) requires
+verified application status from Allegro's developer programme.
+Workarounds: paid captcha-solving service (e.g. CapSolver) or API verification approval.
