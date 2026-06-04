@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ query }} — Price Aggregator</title>
+  <style>
+    :root {
+      --allegro:     #ff6a00;
+      --ceneo:       #0050b3;
+      --olx:         #002f34;
+      --sprzedajemy: #1aa34a;
+      --bg: #f4f4f5;
+      --card: #ffffff;
+      --text: #18181b;
+      --muted: #71717a;
+      --radius: 10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 28px 20px 60px;
+    }
+
+    header {
+      max-width: 1200px;
+      margin: 0 auto 20px;
+    }
+
+    header h1 { font-size: 1.6rem; font-weight: 700; }
+    header h1 em { font-style: normal; color: #2563eb; }
+    header p { color: var(--muted); margin-top: 4px; font-size: 0.9rem; }
+
+    .filters {
+      max-width: 1200px;
+      margin: 0 auto 20px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1.5px solid #d4d4d8;
+      background: var(--card);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: background .12s, border-color .12s, color .12s;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: var(--text);
+      border-color: var(--text);
+      color: #fff;
+    }
+
+    .grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,.07);
+      display: flex;
+      flex-direction: column;
+      transition: transform .15s, box-shadow .15s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(0,0,0,.10);
+    }
+
+    .card-thumb {
+      width: 100%;
+      height: 170px;
+      object-fit: contain;
+      background: #fafafa;
+      padding: 10px;
+    }
+
+    .card-thumb-placeholder {
+      width: 100%;
+      height: 170px;
+      background: #f1f1f1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      color: #ccc;
+    }
+
+    .card-body {
+      padding: 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      align-self: flex-start;
+    }
+
+    .badge-Allegro     { background: var(--allegro); }
+    .badge-Ceneo       { background: var(--ceneo); }
+    .badge-OLX         { background: var(--olx); }
+    .badge-Sprzedajemy { background: var(--sprzedajemy); }
+
+    .card-name {
+      font-size: 0.82rem;
+      line-height: 1.4;
+      flex: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-price {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #dc2626;
+    }
+
+    .card-meta {
+      font-size: 0.73rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .card-footer {
+      padding: 0 12px 12px;
+    }
+
+    .card-footer a {
+      display: block;
+      text-align: center;
+      padding: 8px;
+      background: #f4f4f5;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      transition: background .12s;
+    }
+
+    .card-footer a:hover { background: #e4e4e7; }
+
+    .no-results {
+      max-width: 600px;
+      margin: 60px auto;
+      text-align: center;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Wyniki dla: <em>{{ query }}</em></h1>
+  <p>{{ products | length }} ofert · sortowane od najtańszych</p>
+</header>
+
+{% if products %}
+<div class="filters">
+  <button class="filter-btn active" onclick="filter('all', this)">Wszystkie</button>
+  {% for src in sources %}
+  <button class="filter-btn" onclick="filter('{{ src }}', this)">{{ src }}</button>
+  {% endfor %}
+</div>
+
+<div class="grid" id="grid">
+  {% for p in products %}
+  <div class="card" data-source="{{ p.source }}">
+
+    {% if p.image_url %}
+    <img class="card-thumb" src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy"
+         onerror="this.outerHTML='<div class=card-thumb-placeholder>🛒</div>'">
+    {% else %}
+    <div class="card-thumb-placeholder">🛒</div>
+    {% endif %}
+
+    <div class="card-body">
+      <span class="badge badge-{{ p.source }}">{{ p.source }}</span>
+      <p class="card-name" title="{{ p.name }}">{{ p.name }}</p>
+      <div class="card-price">{{ p.price_display }}</div>
+      <div class="card-meta">
+        {% if p.seller %}{{ p.seller }}<br>{% endif %}
+        Dostawa: {{ p.shipping_display }}
+        {% if p.condition %} · {{ p.condition_display }}{% endif %}
+        {% if p.location %} · {{ p.location }}{% endif %}
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">Zobacz ofertę →</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="no-results">
+  <p style="font-size:3rem">🔍</p>
+  <p style="margin-top:12px">Brak wyników dla „{{ query }}".</p>
+</div>
+{% endif %}
+
+<script>
+  function filter(source, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.card').forEach(card => {
+      card.style.display = (source === 'all' || card.dataset.source === source) ? '' : 'none';
+    });
+  }
+</script>
+
+</body>
+</html>
