@@ -96,6 +96,7 @@ Adding a new scraper: subclass `ScraperBase`, implement `search()`, add to the l
 
 **Allegro** is protected by [DataDome](https://datadome.co/) bot detection.
 The following approaches were tried and blocked: Playwright Chromium/Firefox headless,
-Camoufox, Patchright, nodriver. The official REST API (`/offers/listing`) requires
-verified application status from Allegro's developer programme.
-Workarounds: paid captcha-solving service (e.g. CapSolver) or API verification approval.
+Camoufox, Patchright, nodriver. The official REST API (`/offers/listing`) requires verified application status,
+but Allegro announced (via their API GitHub) that they no longer review or approve
+new applications — this is a permanent business decision.
+Workaround: paid captcha-solving service (e.g. CapSolver).
