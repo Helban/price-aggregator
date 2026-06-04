@@ -9,12 +9,14 @@ from jinja2 import Environment, FileSystemLoader
 from models import Product
 from scrapers.allegro import AllegroScraper
 from scrapers.ceneo import CeneoScraper
+from scrapers.olx import OlxScraper
 
 
 async def search_all(query: str) -> list[Product]:
     scrapers = [
-        # AllegroScraper(),  # zablokowany przez DataDome — do rozwiązania
+        # AllegroScraper(),  # blocked by DataDome — to be resolved
         CeneoScraper(),
+        OlxScraper(),
     ]
     try:
         results = await asyncio.gather(
