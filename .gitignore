@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 .env
 .allegro_token.json
+DEV_NOTES.md
