@@ -12,7 +12,10 @@ from scrapers.ceneo import CeneoScraper
 
 
 async def search_all(query: str) -> list[Product]:
-    scrapers = [AllegroScraper(), CeneoScraper()]
+    scrapers = [
+        # AllegroScraper(),  # zablokowany przez DataDome — do rozwiązania
+        CeneoScraper(),
+    ]
     try:
         results = await asyncio.gather(
             *(s.search(query) for s in scrapers),
