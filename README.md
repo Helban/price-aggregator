@@ -55,13 +55,15 @@ python main.py "hulajnoga elektryczna vsett"
 ## Running tests
 
 ```bash
-# First time: generate HTML fixtures from live sites
-python tests/update_fixtures.py
-
 pytest
 ```
 
-Fixtures are git-ignored (real HTML from live sites, ~4MB). Re-run `update_fixtures.py` whenever a scraper breaks due to a site layout change.
+HTML fixtures are committed to the repo so tests work offline out of the box.
+When a scraper breaks due to a site layout change, refresh them with:
+
+```bash
+python tests/update_fixtures.py
+```
 
 ## Architecture
 
