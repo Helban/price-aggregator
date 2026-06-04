@@ -53,11 +53,13 @@ python main.py "hulajnoga elektryczna vsett"
 ## Running tests
 
 ```bash
-pytest
-
-# Refresh HTML fixtures after a site layout change:
+# First time: generate HTML fixtures from live sites
 python tests/update_fixtures.py
+
+pytest
 ```
+
+Fixtures are git-ignored (real HTML from live sites, ~4MB). Re-run `update_fixtures.py` whenever a scraper breaks due to a site layout change.
 
 ## Architecture
 

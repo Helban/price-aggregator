@@ -2,45 +2,48 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project
-
-Polish Price Aggregator — wyszukuje produkt równolegle na Allegro, Ceneo, OLX i Sprzedajemy.pl,
-wyniki prezentuje jako stronę HTML otwieraną w przeglądarce.
-
 ## Commands
 
 ```bash
 source .venv/bin/activate
 
-# Run
-python main.py "laptop lenovo"
+python main.py "laptop lenovo"      # run a search
 
-# Add dependency
-pip install <package> && pip freeze > requirements.txt
+pytest                              # run tests
+python tests/update_fixtures.py    # refresh HTML fixtures (required before first test run)
 ```
 
 ## Architecture
 
-Plugin/strategy pattern — każdy scraper to osobna klasa dziedzicząca z `ScraperBase`.
+Plugin/strategy pattern — each scraper is an independent class inheriting from `ScraperBase`.
 
 ```
-main.py               # entry point: asyncio.gather po wszystkich scraperach → render → webbrowser
-config.py             # env vars (ALLEGRO_CLIENT_ID, ALLEGRO_CLIENT_SECRET) via python-dotenv
-models.py             # Product dataclass — jeden wspólny model dla wszystkich źródeł
+main.py               # entry point: asyncio.gather → Jinja2 render → webbrowser.open
+config.py             # env vars via python-dotenv
+models.py             # Product dataclass — shared model for all scrapers
 scrapers/
-  base.py             # ScraperBase ABC z metodą search(query, limit) → List[Product]
-  allegro.py          # REST API (OAuth2 client_credentials), httpx async
-  ceneo.py            # TODO: httpx + BeautifulSoup
-  olx.py              # TODO: httpx + BeautifulSoup / REST API
-  sprzedajemy.py      # TODO: Playwright (JS-rendered)
+  base.py             # ScraperBase ABC + shared parse_polish_price()
+  ceneo.py            # httpx + BeautifulSoup
+  olx.py              # httpx + BeautifulSoup, parallel image enrichment
+  sprzedajemy.py      # httpx + BeautifulSoup
+  allegro.py          # Playwright stub — blocked by DataDome (see ROADMAP)
 templates/
-  results.html        # Jinja2 — grid kart, filtrowanie po źródle po stronie klienta
+  results.html        # Jinja2 (autoescape=True) + vanilla JS filtering/sorting/carousel
+tests/
+  fixtures/           # real HTML snapshots (git-ignored, generate with update_fixtures.py)
+  update_fixtures.py  # re-captures fixtures from live sites
 ```
 
-Nowe scrapery: skopiuj wzorzec z `allegro.py`, nadpisz `source_name` i `search()`, dodaj instancję do listy w `main.py`.
+## Adding a new scraper
 
-## Allegro API
+1. Create `scrapers/yoursite.py` subclassing `ScraperBase`
+2. Implement `search(query, limit)` returning `List[Product]`
+3. Use `self.parse_polish_price(raw)` for price parsing
+4. Add to the scrapers list in `main.py`
+5. Add fixture and `TestYoursiteParser` class in `tests/test_scrapers.py`
 
-Wymaga konta deweloperskiego: https://developer.allegro.pl  
-Klucze w `.env` (skopiuj z `.env.example`).
-Sandbox: zmień `_AUTH_URL`/`_API_BASE` w `scrapers/allegro.py` na `allegrosandbox.pl`.
+## Test strategy
+
+Fixture-based: parsers are tested against real captured HTML, not mocked HTTP.
+This catches layout changes on live sites. When a scraper breaks, run
+`update_fixtures.py` to refresh, then fix the parser to match the new structure.
