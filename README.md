@@ -81,6 +81,13 @@ tests/
 
 Adding a new scraper: subclass `ScraperBase`, implement `search()`, add to the list in `main.py`.
 
+## Security
+
+- **XSS prevention** — Jinja2 renders results with `autoescape=True`; all scraped content (product names, URLs, seller names) is HTML-escaped before output
+- **No secrets in code** — Allegro API credentials are loaded exclusively from `.env` via `python-dotenv`; `.env` is git-ignored
+- **No data persistence** — results are written to a temp file (`/tmp/`) and never stored or transmitted
+- **URL validation** — scraped URLs are rendered as links but escaped; `javascript:` protocol payloads are neutralised by autoescape
+
 ## Known Limitations
 
 **Allegro** is protected by [DataDome](https://datadome.co/) bot detection.
