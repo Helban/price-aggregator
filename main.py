@@ -17,7 +17,7 @@ async def search_all(query: str) -> list[Product]:
     scrapers = [
         # AllegroScraper(),  # blocked by DataDome — to be resolved
         CeneoScraper(),
-        OlxScraper(fetch_images=False),
+        OlxScraper(fetch_images=True),
         SprzedajemyScraper(),
     ]
     try:

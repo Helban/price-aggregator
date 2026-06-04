@@ -82,16 +82,19 @@ class OlxScraper(ScraperBase):
         )
 
     async def _enrich_images(self, products: List[Product]) -> None:
-        """Fetch offer detail pages in parallel to retrieve all photos."""
+        """Fetch offer detail pages to retrieve all photos (max 8 concurrent)."""
+        sem = asyncio.Semaphore(8)
+
         async def fetch_one(product: Product) -> None:
-            try:
-                resp = await self._client.get(product.url, timeout=10.0)
-                if resp.is_success:
-                    product.image_urls = self._extract_detail_images(resp.text)
-                    if product.image_urls and not product.image_url:
-                        product.image_url = product.image_urls[0]
-            except Exception:
-                pass  # image enrichment is best-effort
+            async with sem:
+                try:
+                    resp = await self._client.get(product.url, timeout=10.0)
+                    if resp.is_success:
+                        product.image_urls = self._extract_detail_images(resp.text)
+                        if product.image_urls and not product.image_url:
+                            product.image_url = product.image_urls[0]
+                except Exception:
+                    pass  # image enrichment is best-effort
 
         await asyncio.gather(*[fetch_one(p) for p in products])
 
