@@ -1,7 +1,9 @@
 # Roadmap
 
-## In progress
-- [ ] Sprzedajemy.pl scraper (Playwright, JS-rendered)
+## Done
+- [x] Ceneo scraper (httpx + BeautifulSoup)
+- [x] OLX scraper (httpx + BeautifulSoup, image carousel)
+- [x] Sprzedajemy.pl scraper (httpx + BeautifulSoup — JS not required)
 
 ## Planned
 - [ ] Web UI — FastAPI endpoint + search form, deploy to Railway.app

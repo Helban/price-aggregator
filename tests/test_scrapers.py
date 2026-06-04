@@ -13,6 +13,7 @@ import pytest
 
 from scrapers.ceneo import CeneoScraper
 from scrapers.olx import OlxScraper
+from scrapers.sprzedajemy import SprzedajemyScraper
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -91,6 +92,37 @@ class TestOlxParser:
         products = self.scraper._parse(self.html, limit=20)
         for p in products:
             assert isinstance(p.price, Decimal)
+
+
+class TestSprzedajemyParser:
+    def setup_method(self):
+        self.scraper = SprzedajemyScraper()
+        self.html = load("sprzedajemy_laptop_lenovo.html")
+
+    def test_returns_results(self):
+        products = self.scraper._parse(self.html, limit=20)
+        assert len(products) > 0
+
+    def test_respects_limit(self):
+        products = self.scraper._parse(self.html, limit=4)
+        assert len(products) <= 4
+
+    def test_product_fields(self):
+        product = self.scraper._parse(self.html, limit=1)[0]
+        assert product.name
+        assert product.price > 0
+        assert product.url.startswith("https://sprzedajemy.pl/")
+        assert product.source == "Sprzedajemy"
+
+    def test_location_present(self):
+        products = self.scraper._parse(self.html, limit=10)
+        located = [p for p in products if p.location]
+        assert len(located) > 0
+
+    def test_image_url_present(self):
+        products = self.scraper._parse(self.html, limit=10)
+        with_img = [p for p in products if p.image_url]
+        assert len(with_img) > 0
 
 
 class TestOlxPriceParser:

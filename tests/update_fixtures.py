@@ -16,8 +16,9 @@ HEADERS = {
     )
 }
 SOURCES = [
-    ("ceneo_laptop_lenovo.html", "https://www.ceneo.pl/szukaj-laptop+lenovo"),
-    ("olx_laptop_lenovo.html",   "https://www.olx.pl/oferty/q-laptop-lenovo/"),
+    ("ceneo_laptop_lenovo.html",       "https://www.ceneo.pl/szukaj-laptop+lenovo"),
+    ("olx_laptop_lenovo.html",         "https://www.olx.pl/oferty/q-laptop-lenovo/"),
+    ("sprzedajemy_laptop_lenovo.html", "https://sprzedajemy.pl/szukaj?schm2=hp&inp_text[v]=laptop+lenovo&inp_category_id=5&catCode="),
 ]
 
 

@@ -10,6 +10,7 @@ from models import Product
 from scrapers.allegro import AllegroScraper
 from scrapers.ceneo import CeneoScraper
 from scrapers.olx import OlxScraper
+from scrapers.sprzedajemy import SprzedajemyScraper
 
 
 async def search_all(query: str) -> list[Product]:
@@ -17,6 +18,7 @@ async def search_all(query: str) -> list[Product]:
         # AllegroScraper(),  # blocked by DataDome — to be resolved
         CeneoScraper(),
         OlxScraper(),
+        SprzedajemyScraper(),
     ]
     try:
         results = await asyncio.gather(
