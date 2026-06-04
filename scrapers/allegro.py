@@ -24,7 +24,7 @@ class AllegroScraper(ScraperBase):
     source_name = "Allegro"
 
     def __init__(self) -> None:
-        self._client = httpx.AsyncClient(timeout=15.0)
+        self._client = httpx.AsyncClient(timeout=15.0, follow_redirects=False)
 
     # ------------------------------------------------------------------ auth
 
@@ -55,9 +55,10 @@ class AllegroScraper(ScraperBase):
         resp = await self._client.post(
             _DEVICE_URL,
             data={"client_id": ALLEGRO_CLIENT_ID},
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            headers={"Authorization": f"Basic {self._basic_auth()}"},
         )
-        resp.raise_for_status()
+        if not resp.is_success:
+            raise RuntimeError(f"Allegro device flow {resp.status_code}: {resp.text[:400]}")
         info = resp.json()
 
         url = info.get("verification_uri_complete", info["verification_uri"])
