@@ -8,10 +8,11 @@ from jinja2 import Environment, FileSystemLoader
 
 from models import Product
 from scrapers.allegro import AllegroScraper
+from scrapers.ceneo import CeneoScraper
 
 
 async def search_all(query: str) -> list[Product]:
-    scrapers = [AllegroScraper()]
+    scrapers = [AllegroScraper(), CeneoScraper()]
     try:
         results = await asyncio.gather(
             *(s.search(query) for s in scrapers),

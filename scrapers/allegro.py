@@ -1,159 +1,131 @@
 import asyncio
-import base64
-import json
-import time
-import webbrowser
 from decimal import Decimal
-from pathlib import Path
 from typing import List, Optional
+from urllib.parse import quote_plus
 
-import httpx
+from bs4 import BeautifulSoup
+from playwright.async_api import async_playwright, BrowserContext
 
-from config import ALLEGRO_CLIENT_ID, ALLEGRO_CLIENT_SECRET
 from models import Product
 from scrapers.base import ScraperBase
 
-_AUTH_URL = "https://allegro.pl/auth/oauth/token"
-_DEVICE_URL = "https://allegro.pl/auth/oauth/device"
-_API_BASE = "https://api.allegro.pl"
-_ACCEPT = "application/vnd.allegro.public.v1+json"
-_TOKEN_FILE = Path(__file__).parent.parent / ".allegro_token.json"
+_SEARCH_URL = "https://allegro.pl/listing"
+
+# JS patches applied before page load to mask headless signals
+_STEALTH_JS = """
+Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+Object.defineProperty(navigator, 'plugins', {get: () => [1,2,3,4,5]});
+Object.defineProperty(navigator, 'languages', {get: () => ['pl-PL', 'pl', 'en-US', 'en']});
+window.chrome = {runtime: {}};
+""".strip()
 
 
 class AllegroScraper(ScraperBase):
     source_name = "Allegro"
 
-    def __init__(self) -> None:
-        self._client = httpx.AsyncClient(timeout=15.0, follow_redirects=False)
+    async def search(self, query: str, limit: int = 20) -> List[Product]:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+            ctx: BrowserContext = await browser.new_context(
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/124.0.0.0 Safari/537.36"
+                ),
+                locale="pl-PL",
+                viewport={"width": 1280, "height": 900},
+                extra_http_headers={
+                    "Accept-Language": "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7",
+                },
+            )
+            await ctx.add_init_script(_STEALTH_JS)
+            page = await ctx.new_page()
 
-    # ------------------------------------------------------------------ auth
+            try:
+                await page.goto(
+                    f"{_SEARCH_URL}?string={quote_plus(query)}",
+                    wait_until="domcontentloaded",
+                    timeout=30000,
+                )
+                # DataDome check
+                html_check = await page.content()
+                if "datadome" in html_check.lower() or "captcha" in html_check.lower():
+                    raise RuntimeError(
+                        "Allegro zablokował dostęp (DataDome captcha). "
+                        "Spróbuj ponownie za chwilę lub uruchom z widoczną przeglądarką."
+                    )
 
-    def _basic_auth(self) -> str:
-        return base64.b64encode(
-            f"{ALLEGRO_CLIENT_ID}:{ALLEGRO_CLIENT_SECRET}".encode()
-        ).decode()
+                await page.wait_for_selector("article", timeout=15000)
+                await asyncio.sleep(0.8)
+                html = await page.content()
+            finally:
+                await browser.close()
 
-    def _load_token(self) -> Optional[dict]:
-        if _TOKEN_FILE.exists():
-            return json.loads(_TOKEN_FILE.read_text())
+        return self._parse(html, limit)
+
+    def _parse(self, html: str, limit: int) -> List[Product]:
+        soup = BeautifulSoup(html, "lxml")
+        products: List[Product] = []
+        for article in soup.find_all("article")[:limit]:
+            p = self._parse_article(article)
+            if p:
+                products.append(p)
+        return products
+
+    def _parse_article(self, article) -> Optional[Product]:
+        # link z URL oferty i tytułem
+        link = article.find("a", href=lambda h: h and "/oferta/" in h)
+        if not link:
+            return None
+        url = link["href"]
+        if not url.startswith("http"):
+            url = "https://allegro.pl" + url
+
+        name = link.get("title") or link.get_text(strip=True)
+        if not name:
+            h = article.find(["h2", "h3"])
+            name = h.get_text(strip=True) if h else "Brak tytułu"
+
+        # cena: szukamy elementu zawierającego "zł"
+        price = self._extract_price(article)
+        if price is None:
+            return None
+
+        # dostawa
+        shipping = self._extract_shipping(article)
+
+        # obrazek
+        img = article.find("img")
+        image_url = img.get("src") or img.get("data-src") if img else None
+
+        return Product(
+            name=name,
+            price=price,
+            url=url,
+            source=self.source_name,
+            image_url=image_url,
+            shipping_price=shipping,
+        )
+
+    @staticmethod
+    def _extract_price(article) -> Optional[Decimal]:
+        for el in article.find_all(string=True):
+            text = el.strip().replace("\xa0", "").replace(" ", "")
+            if "zł" in text:
+                try:
+                    raw = text.replace("zł", "").replace(",", ".").strip()
+                    return Decimal(raw)
+                except Exception:
+                    continue
         return None
 
-    def _save_token(self, data: dict) -> None:
-        data["saved_at"] = time.time()
-        _TOKEN_FILE.write_text(json.dumps(data))
-
-    async def _refresh(self, refresh_token: str) -> dict:
-        resp = await self._client.post(
-            _AUTH_URL,
-            params={"grant_type": "refresh_token", "refresh_token": refresh_token},
-            headers={"Authorization": f"Basic {self._basic_auth()}"},
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-    async def _device_flow(self) -> dict:
-        resp = await self._client.post(
-            _DEVICE_URL,
-            params={"client_id": ALLEGRO_CLIENT_ID},
-            headers={"Authorization": f"Basic {self._basic_auth()}"},
-        )
-        if not resp.is_success:
-            raise RuntimeError(f"Allegro device flow {resp.status_code}: {resp.text[:400]}")
-        info = resp.json()
-
-        url = info.get("verification_uri_complete", info["verification_uri"])
-        interval = info.get("interval", 5)
-
-        print(f"\nOtwórz w przeglądarce i zatwierdź dostęp:\n  {url}\n")
-        webbrowser.open(url)
-        print("Czekam na potwierdzenie...", flush=True)
-
-        while True:
-            await asyncio.sleep(interval)
-            resp = await self._client.post(
-                _AUTH_URL,
-                params={
-                    "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-                    "device_code": info["device_code"],
-                },
-                headers={"Authorization": f"Basic {self._basic_auth()}"},
-            )
-            if resp.status_code == 400:
-                err = resp.json().get("error", "")
-                if err == "authorization_pending":
-                    continue
-                if err == "slow_down":
-                    interval += 5
-                    continue
-                raise RuntimeError(f"Allegro device flow: {resp.text}")
-            resp.raise_for_status()
-            return resp.json()
-
-    async def _get_token(self) -> str:
-        if not ALLEGRO_CLIENT_ID or not ALLEGRO_CLIENT_SECRET:
-            raise RuntimeError(
-                "ALLEGRO_CLIENT_ID / ALLEGRO_CLIENT_SECRET not set. "
-                "Copy .env.example → .env and fill in your API credentials."
-            )
-
-        cached = self._load_token()
-
-        if cached:
-            age = time.time() - cached.get("saved_at", 0)
-            expires_in = cached.get("expires_in", 43200)
-            if age < expires_in - 60:
-                return cached["access_token"]
-
-            # token wygasł — odśwież
-            if "refresh_token" in cached:
-                try:
-                    token_data = await self._refresh(cached["refresh_token"])
-                    self._save_token(token_data)
-                    return token_data["access_token"]
-                except httpx.HTTPStatusError:
-                    pass  # refresh się nie udał, wróć do device flow
-
-        token_data = await self._device_flow()
-        self._save_token(token_data)
-        print("Autoryzacja zakończona.\n")
-        return token_data["access_token"]
-
-    # ------------------------------------------------------------------ search
-
-    async def search(self, query: str, limit: int = 20) -> List[Product]:
-        token = await self._get_token()
-
-        resp = await self._client.get(
-            f"{_API_BASE}/offers/listing",
-            params={"phrase": query, "limit": limit, "sort": "+price"},
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Accept": _ACCEPT,
-            },
-        )
-        if not resp.is_success:
-            raise RuntimeError(f"Allegro API {resp.status_code}: {resp.text[:500]}")
-
-        items = resp.json().get("items", {})
-        raw = items.get("regular", []) + items.get("promoted", [])
-        return [self._parse_item(item) for item in raw[:limit]]
-
-    def _parse_item(self, item: dict) -> Product:
-        images = item.get("images", [])
-        shipping_raw = (
-            item.get("delivery", {})
-            .get("lowestAndDefaultDeliveryMethodPrice", {})
-        )
-        return Product(
-            name=item["name"],
-            price=Decimal(str(item["price"]["amount"])),
-            url=f"https://allegro.pl/oferta/{item['id']}",
-            source=self.source_name,
-            image_url=images[0]["url"] if images else None,
-            condition=item.get("condition"),
-            seller=item.get("seller", {}).get("login"),
-            shipping_price=Decimal(str(shipping_raw["amount"])) if shipping_raw else None,
-        )
-
-    async def close(self) -> None:
-        await self._client.aclose()
+    @staticmethod
+    def _extract_shipping(article) -> Optional[Decimal]:
+        for el in article.find_all(string=True):
+            text = el.lower()
+            if "darmow" in text or "free" in text:
+                return Decimal("0")
+        return None
