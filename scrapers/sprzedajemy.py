@@ -1,5 +1,5 @@
 from decimal import Decimal, InvalidOperation
-from typing import List, Optional
+from typing import Optional
 
 import httpx
 from bs4 import BeautifulSoup
@@ -26,7 +26,7 @@ class SprzedajemyScraper(ScraperBase):
             headers=_HEADERS, follow_redirects=True, timeout=15.0
         )
 
-    async def search(self, query: str, limit: int = 20) -> List[Product]:
+    async def search(self, query: str, limit: int = 20) -> list[Product]:
         resp = await self._client.get(
             f"{_BASE}/szukaj",
             params={
@@ -39,7 +39,7 @@ class SprzedajemyScraper(ScraperBase):
             raise RuntimeError(f"Sprzedajemy {resp.status_code}: {resp.text[:200]}")
         return self._parse(resp.text, limit)
 
-    def _parse(self, html: str, limit: int) -> List[Product]:
+    def _parse(self, html: str, limit: int) -> list[Product]:
         soup = BeautifulSoup(html, "lxml")
         articles = soup.select("article.element")[:limit]
         return [p for p in (self._parse_article(a) for a in articles) if p]

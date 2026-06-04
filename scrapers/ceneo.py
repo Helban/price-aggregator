@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List, Optional
+from typing import Optional
 from urllib.parse import quote_plus
 
 import httpx
@@ -27,14 +27,14 @@ class CeneoScraper(ScraperBase):
             headers=_HEADERS, follow_redirects=True, timeout=15.0
         )
 
-    async def search(self, query: str, limit: int = 20) -> List[Product]:
+    async def search(self, query: str, limit: int = 20) -> list[Product]:
         slug = quote_plus(query)
         resp = await self._client.get(f"{_BASE}/szukaj-{slug}")
         if not resp.is_success:
             raise RuntimeError(f"Ceneo {resp.status_code}: {resp.text[:200]}")
         return self._parse(resp.text, limit)
 
-    def _parse(self, html: str, limit: int) -> List[Product]:
+    def _parse(self, html: str, limit: int) -> list[Product]:
         soup = BeautifulSoup(html, "lxml")
         rows = soup.select(".cat-prod-row")[:limit]
         return [p for p in (self._parse_row(r) for r in rows) if p]

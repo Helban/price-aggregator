@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal, InvalidOperation
-from typing import List, Optional
+from typing import Optional
 
 from models import Product
 
@@ -9,7 +9,7 @@ class ScraperBase(ABC):
     source_name: str = ""
 
     @abstractmethod
-    async def search(self, query: str, limit: int = 20) -> List[Product]:
+    async def search(self, query: str, limit: int = 20) -> list[Product]:
         ...
 
     async def close(self) -> None:

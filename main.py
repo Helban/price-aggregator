@@ -4,6 +4,7 @@ import tempfile
 import webbrowser
 from pathlib import Path
 
+import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
 from models import Product
@@ -52,6 +53,30 @@ def render_results(query: str, products: list[Product]) -> str:
     return template.render(query=query, products=products, sources=sources)
 
 
+def export_to_excel(query: str, products: list[Product], path: Path) -> None:
+    rows = [
+        {
+            "Nazwa": p.name,
+            "Cena (zł)": float(p.price),
+            "Dostawa (zł)": float(p.shipping_price) if p.shipping_price is not None else "",
+            "Łącznie (zł)": float(p.total_price),
+            "Źródło": p.source,
+            "Stan": p.condition_display or "",
+            "Lokalizacja": p.location or "",
+            "Sprzedawca": p.seller or "",
+            "URL": p.url,
+        }
+        for p in products
+    ]
+    df = pd.DataFrame(rows)
+    with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name=query[:31])
+        ws = writer.sheets[query[:31]]
+        ws.column_dimensions["A"].width = 55
+        ws.column_dimensions["I"].width = 60
+    print(f"Exported: {path}")
+
+
 def open_in_browser(html: str) -> None:
     with tempfile.NamedTemporaryFile(
         suffix=".html", delete=False, mode="w", encoding="utf-8"
@@ -63,9 +88,12 @@ def open_in_browser(html: str) -> None:
 
 
 async def main() -> None:
-    query = " ".join(sys.argv[1:]).strip()
+    args = sys.argv[1:]
+    export = "--export" in args
+    query = " ".join(a for a in args if a != "--export").strip()
+
     if not query:
-        print("Usage: python main.py <query>")
+        print("Usage: python main.py <query> [--export]")
         sys.exit(1)
 
     print(f"Searching: {query!r}")
@@ -74,6 +102,10 @@ async def main() -> None:
 
     html = render_results(query, products)
     open_in_browser(html)
+
+    if export:
+        safe = query.replace(" ", "_")[:40]
+        export_to_excel(query, products, Path(f"{safe}.xlsx"))
 
 
 if __name__ == "__main__":

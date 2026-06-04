@@ -1,6 +1,6 @@
 import asyncio
 from decimal import Decimal
-from typing import List, Optional
+from typing import Optional
 from urllib.parse import quote_plus
 
 from bs4 import BeautifulSoup
@@ -23,7 +23,7 @@ window.chrome = {runtime: {}};
 class AllegroScraper(ScraperBase):
     source_name = "Allegro"
 
-    async def search(self, query: str, limit: int = 20) -> List[Product]:
+    async def search(self, query: str, limit: int = 20) -> list[Product]:
         async with async_playwright() as p:
             browser = await p.chromium.launch(
                 headless=True,
@@ -66,9 +66,9 @@ class AllegroScraper(ScraperBase):
 
         return self._parse(html, limit)
 
-    def _parse(self, html: str, limit: int) -> List[Product]:
+    def _parse(self, html: str, limit: int) -> list[Product]:
         soup = BeautifulSoup(html, "lxml")
-        products: List[Product] = []
+        products: list[Product] = []
         for article in soup.find_all("article")[:limit]:
             p = self._parse_article(article)
             if p:

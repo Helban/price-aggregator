@@ -14,7 +14,7 @@ python main.py "laptop lenovo"
 
 Opens a local HTML page with results sorted by price, filterable by source, with image carousels for OLX listings.
 
-![screenshot placeholder]
+![Screenshot showing search results for "laptop lenovo" with price cards from Ceneo, OLX and Sprzedajemy.pl](docs/screenshot.png)
 
 ## Features
 

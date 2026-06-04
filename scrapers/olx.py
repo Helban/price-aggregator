@@ -1,6 +1,6 @@
 import asyncio
 from decimal import Decimal, InvalidOperation
-from typing import List, Optional
+from typing import Optional
 from urllib.parse import quote_plus
 
 import httpx
@@ -30,7 +30,7 @@ class OlxScraper(ScraperBase):
         )
         self._fetch_images = fetch_images
 
-    async def search(self, query: str, limit: int = 20) -> List[Product]:
+    async def search(self, query: str, limit: int = 20) -> list[Product]:
         slug = quote_plus(query)
         resp = await self._client.get(f"{_BASE}/oferty/q-{slug}/")
         if not resp.is_success:
@@ -43,7 +43,7 @@ class OlxScraper(ScraperBase):
 
         return products
 
-    def _parse(self, html: str, limit: int) -> List[Product]:
+    def _parse(self, html: str, limit: int) -> list[Product]:
         soup = BeautifulSoup(html, "lxml")
         cards = soup.select("[data-cy='l-card']")[:limit]
         return [p for p in (self._parse_card(c) for c in cards) if p]
@@ -81,7 +81,7 @@ class OlxScraper(ScraperBase):
             location=location,
         )
 
-    async def _enrich_images(self, products: List[Product]) -> None:
+    async def _enrich_images(self, products: list[Product]) -> None:
         """Fetch offer detail pages to retrieve all photos (max 8 concurrent)."""
         sem = asyncio.Semaphore(8)
 
