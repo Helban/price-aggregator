@@ -156,6 +156,12 @@
     <button class="sort-btn active" data-sort="price-asc"  onclick="setSort('price-asc',  this)">Cena ↑</button>
     <button class="sort-btn"        data-sort="price-desc" onclick="setSort('price-desc', this)">Cena ↓</button>
   </div>
+
+  <div class="divider"></div>
+
+  <div class="toolbar-group">
+    <button class="sort-btn" onclick="exportCSV()">Eksportuj CSV</button>
+  </div>
 </div>
 
 <div class="grid" id="grid">
@@ -259,6 +265,25 @@
 
     document.getElementById('count-label').textContent =
       visible + ' ofert' + (visible !== cards.length ? ' (z ' + cards.length + ')' : '');
+  }
+
+  function exportCSV() {
+    const rows = [['Nazwa', 'Cena (zł)', 'Dostawa (zł)', 'Źródło', 'Lokalizacja', 'URL']];
+    document.querySelectorAll('.card:not([hidden])').forEach(card => {
+      const name     = card.querySelector('.card-name')?.textContent.trim() ?? '';
+      const price    = card.dataset.price ?? '';
+      const meta     = card.querySelector('.card-meta')?.textContent ?? '';
+      const source   = card.dataset.source ?? '';
+      const url      = card.querySelector('.card-footer a')?.href ?? '';
+      const delivery = (meta.match(/Dostawa:\s*([^\n·]+)/) ?? [])[1]?.trim() ?? '';
+      const location = (meta.match(/·\s*([^·\n]+)$/) ?? [])[1]?.trim() ?? '';
+      rows.push([name, price, delivery, source, location, url]);
+    });
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+    a.download = 'wyniki.csv';
+    a.click();
   }
 
   function slide(btn, dir) {
