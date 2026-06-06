@@ -7,18 +7,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 source .venv/bin/activate
 
-python main.py "laptop lenovo"      # run a search
+uvicorn app:app --reload            # web UI (text + image search) at http://127.0.0.1:8000
+python main.py "laptop lenovo"      # CLI search
 
 pytest                              # run tests
 python tests/update_fixtures.py    # refresh HTML fixtures (required before first test run)
 ```
 
+Image search needs `GOOGLE_VISION_API_KEY` in `.env` (see `.env.example`). Text search works without it.
+
 ## Architecture
 
 Plugin/strategy pattern — each scraper is an independent class inheriting from `ScraperBase`.
+Two front-ends (CLI `main.py`, web `app.py`) share one pipeline in `search_service.py`.
 
 ```
-main.py               # entry point: asyncio.gather → Jinja2 render → webbrowser.open
+app.py                # FastAPI: GET / , GET /search , POST /resolve-image
+main.py               # CLI entry point: search → Jinja2 render → webbrowser.open
+search_service.py     # shared pipeline: search_all, render_results, export_to_excel
+image_search.py       # image → query via Google Vision WEB_DETECTION (httpx REST)
 config.py             # env vars via python-dotenv
 models.py             # Product dataclass — shared model for all scrapers
 scrapers/
@@ -28,6 +35,7 @@ scrapers/
   sprzedajemy.py      # httpx + BeautifulSoup
   allegro.py          # Playwright stub — blocked by DataDome (see ROADMAP)
 templates/
+  index.html          # landing: search box + image paste/drop zone
   results.html        # Jinja2 (autoescape=True) + vanilla JS filtering/sorting/carousel
 tests/
   fixtures/           # real HTML snapshots (git-ignored, generate with update_fixtures.py)
@@ -39,7 +47,7 @@ tests/
 1. Create `scrapers/yoursite.py` subclassing `ScraperBase`
 2. Implement `search(query, limit)` returning `List[Product]`
 3. Use `self.parse_polish_price(raw)` for price parsing
-4. Add to the scrapers list in `main.py`
+4. Add to the scrapers list in `search_service.py`
 5. Add fixture and `TestYoursiteParser` class in `tests/test_scrapers.py`
 
 ## Test strategy

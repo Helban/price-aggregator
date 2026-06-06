@@ -7,12 +7,13 @@
 - [x] Excel export (`--export` flag, pandas + openpyxl)
 - [x] Fixture-based test suite with `update_fixtures.py`
 - [x] GitHub Actions CI
+- [x] Web UI — FastAPI (`GET /` , `GET /search?q=...` , `POST /resolve-image`)
+- [x] Image search — Google Vision WEB_DETECTION turns a pasted/dropped image into a query
 
 ## Planned
 
 ### Web
-- [ ] Web UI — FastAPI endpoint + search form, deploy to Railway.app
-      `GET /search?q=...` runs scrapers and returns rendered HTML
+- [ ] Deploy to Railway.app (server-side Vision key → visitors test image search with no setup)
 
 ### Filters & UI
 - [ ] City/location filter — `location` field already present in OLX and Sprzedajemy results

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price Aggregator</title>
+  <style>
+    :root {
+      --bg: #f4f4f5;
+      --card: #ffffff;
+      --text: #18181b;
+      --muted: #71717a;
+      --accent: #2563eb;
+      --radius: 10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .panel {
+      width: 100%; max-width: 560px; background: var(--card);
+      border-radius: 14px; padding: 40px 36px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.07);
+    }
+    h1 { font-size: 1.8rem; font-weight: 700; }
+    h1 em { font-style: normal; color: var(--accent); }
+    .subtitle { color: var(--muted); margin-top: 6px; font-size: 0.92rem; }
+
+    form { display: flex; gap: 8px; margin-top: 26px; }
+    #query {
+      flex: 1; padding: 12px 14px; font-size: 1rem;
+      border: 1.5px solid #d4d4d8; border-radius: var(--radius);
+      transition: border-color .12s, box-shadow .12s;
+    }
+    #query:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+    button[type="submit"] {
+      padding: 12px 22px; font-size: 1rem; font-weight: 600; color: #fff;
+      background: var(--accent); border: none; border-radius: var(--radius); cursor: pointer;
+      transition: background .12s;
+    }
+    button[type="submit"]:hover { background: #1d4ed8; }
+
+    .dropzone {
+      display: block;
+      margin-top: 22px; padding: 28px 20px; text-align: center;
+      border: 2px dashed #d4d4d8; border-radius: var(--radius);
+      color: var(--muted); font-size: 0.9rem; cursor: pointer;
+      transition: border-color .12s, background .12s;
+    }
+    .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: #f0f5ff; }
+    .dropzone strong { color: var(--text); }
+    .dropzone kbd {
+      font-family: ui-monospace, monospace; background: #f4f4f5;
+      border: 1px solid #d4d4d8; border-radius: 4px; padding: 1px 6px; font-size: 0.8rem;
+    }
+    .dropzone input[type="file"] { display: none; }
+
+    #status { margin-top: 14px; font-size: 0.9rem; min-height: 1.2em; }
+    #status.error { color: #dc2626; }
+    #status.info  { color: var(--muted); }
+    #status.ok    { color: #16a34a; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>Price <em>Aggregator</em></h1>
+    <p class="subtitle">Porównaj ceny z Ceneo, OLX i Sprzedajemy — tekstem lub zdjęciem.</p>
+
+    <form action="/search" method="get" id="search-form">
+      <input type="text" name="q" id="query" placeholder="np. laptop lenovo" autofocus autocomplete="off">
+      <button type="submit">Szukaj</button>
+    </form>
+
+    <label class="dropzone" id="dropzone">
+      <strong>Szukaj zdjęciem</strong><br>
+      Wklej obraz (<kbd>Ctrl</kbd>+<kbd>V</kbd>), przeciągnij plik tutaj lub kliknij, by wybrać.
+      <input type="file" id="file-input" accept="image/*">
+    </label>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const queryInput = document.getElementById('query');
+    const dropzone   = document.getElementById('dropzone');
+    const fileInput  = document.getElementById('file-input');
+    const statusEl   = document.getElementById('status');
+
+    function setStatus(msg, kind) {
+      statusEl.textContent = msg;
+      statusEl.className = kind || '';
+    }
+
+    // Send an image to the backend, then put the detected phrase into the
+    // search box and focus it — the user reviews and presses Enter.
+    async function resolveImage(blob) {
+      if (!blob || !blob.type.startsWith('image/')) {
+        setStatus('To nie jest obraz.', 'error');
+        return;
+      }
+      setStatus('Rozpoznaję obraz…', 'info');
+      const form = new FormData();
+      form.append('file', blob, blob.name || 'pasted.png');
+
+      try {
+        const resp = await fetch('/resolve-image', { method: 'POST', body: form });
+        const data = await resp.json();
+        if (!resp.ok) {
+          setStatus(data.error || 'Coś poszło nie tak.', 'error');
+          return;
+        }
+        if (!data.query) {
+          setStatus('Nie rozpoznano produktu — wpisz nazwę ręcznie.', 'info');
+          queryInput.focus();
+          return;
+        }
+        queryInput.value = data.query;
+        queryInput.focus();
+        queryInput.select();
+        setStatus('Wykryto: „' + data.query + '" — popraw w razie potrzeby i naciśnij Enter.', 'ok');
+      } catch (e) {
+        setStatus('Błąd połączenia. Spróbuj ponownie.', 'error');
+      }
+    }
+
+    // Paste anywhere on the page (Ctrl+V).
+    window.addEventListener('paste', (e) => {
+      const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+      if (item) { e.preventDefault(); resolveImage(item.getAsFile()); }
+    });
+
+    // Drag & drop onto the zone.
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      resolveImage(e.dataTransfer.files[0]);
+    });
+
+    // Click-to-pick fallback.
+    fileInput.addEventListener('change', () => resolveImage(fileInput.files[0]));
+  </script>
+</body>
+</html>
