@@ -67,16 +67,16 @@
 <body>
   <div class="panel">
     <h1>Price <em>Aggregator</em></h1>
-    <p class="subtitle">Porównaj ceny z Ceneo, OLX i Sprzedajemy — tekstem lub zdjęciem.</p>
+    <p class="subtitle">Compare prices across Ceneo, OLX and Sprzedajemy — by text or image.</p>
 
     <form action="/search" method="get" id="search-form">
-      <input type="text" name="q" id="query" placeholder="np. laptop lenovo" autofocus autocomplete="off">
-      <button type="submit">Szukaj</button>
+      <input type="text" name="q" id="query" placeholder="e.g. laptop lenovo" autofocus autocomplete="off">
+      <button type="submit">Search</button>
     </form>
 
     <label class="dropzone" id="dropzone">
-      <strong>Szukaj zdjęciem</strong><br>
-      Wklej obraz (<kbd>Ctrl</kbd>+<kbd>V</kbd>), przeciągnij plik tutaj lub kliknij, by wybrać.
+      <strong>Search by image</strong><br>
+      Paste (<kbd>Ctrl</kbd>+<kbd>V</kbd>), drag &amp; drop a file, or click to browse.
       <input type="file" id="file-input" accept="image/*">
     </label>
 
@@ -98,10 +98,10 @@
     // search box and focus it — the user reviews and presses Enter.
     async function resolveImage(blob) {
       if (!blob || !blob.type.startsWith('image/')) {
-        setStatus('To nie jest obraz.', 'error');
+        setStatus('That does not look like an image.', 'error');
         return;
       }
-      setStatus('Rozpoznaję obraz…', 'info');
+      setStatus('Analysing image…', 'info');
       const form = new FormData();
       form.append('file', blob, blob.name || 'pasted.png');
 
@@ -109,20 +109,20 @@
         const resp = await fetch('/resolve-image', { method: 'POST', body: form });
         const data = await resp.json();
         if (!resp.ok) {
-          setStatus(data.error || 'Coś poszło nie tak.', 'error');
+          setStatus(data.error || 'Something went wrong.', 'error');
           return;
         }
         if (!data.query) {
-          setStatus('Nie rozpoznano produktu — wpisz nazwę ręcznie.', 'info');
+          setStatus('Could not recognise the product — please type your query manually.', 'info');
           queryInput.focus();
           return;
         }
         queryInput.value = data.query;
         queryInput.focus();
         queryInput.select();
-        setStatus('Wykryto: „' + data.query + '" — popraw w razie potrzeby i naciśnij Enter.', 'ok');
+        setStatus('Detected: "' + data.query + '" — edit if needed, then press Enter.', 'ok');
       } catch (e) {
-        setStatus('Błąd połączenia. Spróbuj ponownie.', 'error');
+        setStatus('Connection error. Please try again.', 'error');
       }
     }
 
