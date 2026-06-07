@@ -23,7 +23,13 @@ python main.py "laptop lenovo"
 
 Both open a results page sorted by price, filterable by source, with image carousels for OLX listings.
 
-![Screenshot showing search results for "laptop lenovo" with price cards from Ceneo, OLX and Sprzedajemy.pl](docs/screenshot.png)
+**Search results** — 80 listings from 3 sources, sorted by price:
+
+![Search results page showing product cards with images, prices and source badges](docs/screenshot_results.png)
+
+**Landing page** — search by text or image:
+
+![Landing page with search box, source chips and image drop zone](docs/screenshot_index.png)
 
 ## Features
 
