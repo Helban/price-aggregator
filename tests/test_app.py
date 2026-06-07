@@ -6,7 +6,6 @@ the scrapers or the live API (those are covered elsewhere / are external).
 """
 from decimal import Decimal
 
-import pytest
 from fastapi.testclient import TestClient
 
 import app as app_module
