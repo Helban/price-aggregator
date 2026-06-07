@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Optional
 
 
 @dataclass
@@ -9,12 +8,12 @@ class Product:
     price: Decimal
     url: str
     source: str
-    image_url: Optional[str] = None
-    image_urls: list[str] = field(default_factory=list)  # multiple images (e.g. OLX gallery)
-    condition: Optional[str] = None   # 'NEW' | 'USED' | None
-    seller: Optional[str] = None
-    shipping_price: Optional[Decimal] = None
-    location: Optional[str] = None
+    image_url: str | None = None
+    image_urls: list[str] = field(default_factory=list)
+    condition: str | None = None   # 'NEW' | 'USED' | None
+    seller: str | None = None
+    shipping_price: Decimal | None = None
+    location: str | None = None
 
     @property
     def total_price(self) -> Decimal:
