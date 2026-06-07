@@ -1,5 +1,5 @@
 import asyncio
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Optional
 from urllib.parse import quote_plus
 
@@ -118,7 +118,7 @@ class AllegroScraper(ScraperBase):
                 try:
                     raw = text.replace("zł", "").replace(",", ".").strip()
                     return Decimal(raw)
-                except Exception:
+                except InvalidOperation:
                     continue
         return None
 

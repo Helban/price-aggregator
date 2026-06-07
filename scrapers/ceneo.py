@@ -1,22 +1,13 @@
 from decimal import Decimal
-from typing import Optional
 from urllib.parse import quote_plus
 
 import httpx
 from bs4 import BeautifulSoup
 
 from models import Product
-from scrapers.base import ScraperBase
+from scrapers.base import ScraperBase, _HEADERS, _TIMEOUT
 
 _BASE = "https://www.ceneo.pl"
-_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "pl-PL,pl;q=0.9",
-}
 
 
 class CeneoScraper(ScraperBase):
@@ -24,7 +15,7 @@ class CeneoScraper(ScraperBase):
 
     def __init__(self) -> None:
         self._client = httpx.AsyncClient(
-            headers=_HEADERS, follow_redirects=True, timeout=15.0
+            headers=_HEADERS, follow_redirects=True, timeout=_TIMEOUT
         )
 
     async def search(self, query: str, limit: int = 20) -> list[Product]:
@@ -39,7 +30,7 @@ class CeneoScraper(ScraperBase):
         rows = soup.select(".cat-prod-row")[:limit]
         return [p for p in (self._parse_row(r) for r in rows) if p]
 
-    def _parse_row(self, row) -> Optional[Product]:
+    def _parse_row(self, row) -> Product | None:
         product_id = row.get("data-productid")
         price_raw = row.get("data-price")
         if not product_id or not price_raw:

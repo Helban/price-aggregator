@@ -1,8 +1,30 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal, InvalidOperation
-from typing import Optional
 
 from models import Product
+
+_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "pl-PL,pl;q=0.9",
+}
+_TIMEOUT = 15.0
+
+
+def parse_polish_price(raw: str) -> Decimal | None:
+    # formats: "999 zł", "1 234 zł", "1.234,99 zł", "14,99 zł"
+    cleaned = raw.replace("zł", "").replace("\xa0", "").strip()
+    if "," in cleaned:
+        cleaned = cleaned.replace(".", "").replace(" ", "").replace(",", ".")
+    else:
+        cleaned = cleaned.replace(" ", "")
+    try:
+        return Decimal(cleaned)
+    except InvalidOperation:
+        return None
 
 
 class ScraperBase(ABC):
@@ -20,22 +42,3 @@ class ScraperBase(ABC):
 
     async def __aexit__(self, *args):
         await self.close()
-
-    @staticmethod
-    def parse_polish_price(raw: str) -> Optional[Decimal]:
-        """Parse a Polish-formatted price string to Decimal.
-
-        Handles: "999 zł", "1 234 zł", "1.234,99 zł", "14,99 zł".
-        Returns None for non-numeric values ("Zamień", "Negocjuj", etc.).
-        """
-        cleaned = raw.replace("zł", "").replace("\xa0", "").strip()
-        if "," in cleaned:
-            # Polish decimal separator is comma; dots and spaces are thousands separators
-            cleaned = cleaned.replace(".", "").replace(" ", "").replace(",", ".")
-        else:
-            # Integer price — spaces are thousands separators
-            cleaned = cleaned.replace(" ", "")
-        try:
-            return Decimal(cleaned)
-        except InvalidOperation:
-            return None

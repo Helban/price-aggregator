@@ -1,21 +1,10 @@
-from decimal import Decimal, InvalidOperation
-from typing import Optional
-
 import httpx
 from bs4 import BeautifulSoup
 
 from models import Product
-from scrapers.base import ScraperBase
+from scrapers.base import ScraperBase, _HEADERS, _TIMEOUT, parse_polish_price
 
 _BASE = "https://sprzedajemy.pl"
-_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "pl-PL,pl;q=0.9",
-}
 
 
 class SprzedajemyScraper(ScraperBase):
@@ -23,7 +12,7 @@ class SprzedajemyScraper(ScraperBase):
 
     def __init__(self) -> None:
         self._client = httpx.AsyncClient(
-            headers=_HEADERS, follow_redirects=True, timeout=15.0
+            headers=_HEADERS, follow_redirects=True, timeout=_TIMEOUT
         )
 
     async def search(self, query: str, limit: int = 20) -> list[Product]:
@@ -44,7 +33,7 @@ class SprzedajemyScraper(ScraperBase):
         articles = soup.select("article.element")[:limit]
         return [p for p in (self._parse_article(a) for a in articles) if p]
 
-    def _parse_article(self, article) -> Optional[Product]:
+    def _parse_article(self, article) -> Product | None:
         link = article.select_one("a.offerLink")
         if not link:
             return None
@@ -58,7 +47,7 @@ class SprzedajemyScraper(ScraperBase):
         name = title_el.get_text(strip=True)
 
         price_el = article.select_one(".price")
-        price = self.parse_polish_price(price_el.get_text(strip=True) if price_el else "")
+        price = parse_polish_price(price_el.get_text(strip=True) if price_el else "")
         if price is None:
             return None
 
@@ -76,7 +65,6 @@ class SprzedajemyScraper(ScraperBase):
             image_url=image_url,
             location=location,
         )
-
 
     async def close(self) -> None:
         await self._client.aclose()

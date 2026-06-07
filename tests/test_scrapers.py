@@ -1,17 +1,9 @@
-"""
-Parser tests using real HTML fixtures captured from each site.
-
-When a scraper breaks due to a site layout change:
-1. Re-capture the fixture: python tests/update_fixtures.py
-2. Update the parser to match the new structure
-3. Re-run tests
-"""
 from decimal import Decimal
 from pathlib import Path
 
 import pytest
 
-from scrapers.base import ScraperBase
+from scrapers.base import parse_polish_price
 from scrapers.ceneo import CeneoScraper
 from scrapers.olx import OlxScraper
 from scrapers.sprzedajemy import SprzedajemyScraper
@@ -127,20 +119,18 @@ class TestSprzedajemyParser:
 
 
 class TestPolishPriceParser:
-    """Tests for ScraperBase.parse_polish_price — shared across all scrapers."""
-
     @pytest.mark.parametrize("raw,expected", [
         ("999 zł",        Decimal("999")),
         ("1 234 zł",      Decimal("1234")),
         ("14\xa0999 zł",  Decimal("14999")),
         ("1 234,99 zł",   Decimal("1234.99")),
-        ("1.234,99 zł",   Decimal("1234.99")),   # dot-thousands + comma-decimal
+        ("1.234,99 zł",   Decimal("1234.99")),
         ("14,99 zł",      Decimal("14.99")),
         ("0 zł",          Decimal("0")),
     ])
     def test_valid_prices(self, raw, expected):
-        assert ScraperBase.parse_polish_price(raw) == expected
+        assert parse_polish_price(raw) == expected
 
     @pytest.mark.parametrize("raw", ["Zamień", "Negocjuj", "Za darmo", ""])
     def test_non_numeric_returns_none(self, raw):
-        assert ScraperBase.parse_polish_price(raw) is None
+        assert parse_polish_price(raw) is None

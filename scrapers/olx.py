@@ -1,24 +1,40 @@
 import asyncio
-from decimal import Decimal, InvalidOperation
-from typing import Optional
 from urllib.parse import quote_plus
 
 import httpx
 from bs4 import BeautifulSoup
 
 from models import Product
-from scrapers.base import ScraperBase
+from scrapers.base import ScraperBase, _HEADERS, _TIMEOUT, parse_polish_price
 
 _BASE = "https://www.olx.pl"
-_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "pl-PL,pl;q=0.9",
-}
 _NO_THUMBNAIL = "no_thumbnail"
+
+
+def _valid_image(src: str | None) -> str | None:
+    if not src or _NO_THUMBNAIL in src:
+        return None
+    return src
+
+
+def _parse_location(raw: str | None) -> str | None:
+    if not raw:
+        return None
+    return raw.split(" - ")[0].strip()
+
+
+def _extract_detail_images(html: str) -> list[str]:
+    soup = BeautifulSoup(html, "lxml")
+    imgs: list[str] = []
+    for img in soup.select(
+        "div[data-testid='ad-photo'] img, .swiper-slide img, [data-cy='ad-photo'] img"
+    ):
+        src = img.get("src") or img.get("data-src", "")
+        if src and _NO_THUMBNAIL not in src and src.startswith("http"):
+            base = src.split(";s=")[0]
+            if base not in imgs:
+                imgs.append(base)
+    return imgs
 
 
 class OlxScraper(ScraperBase):
@@ -26,7 +42,7 @@ class OlxScraper(ScraperBase):
 
     def __init__(self, fetch_images: bool = True) -> None:
         self._client = httpx.AsyncClient(
-            headers=_HEADERS, follow_redirects=True, timeout=15.0
+            headers=_HEADERS, follow_redirects=True, timeout=_TIMEOUT
         )
         self._fetch_images = fetch_images
 
@@ -48,7 +64,7 @@ class OlxScraper(ScraperBase):
         cards = soup.select("[data-cy='l-card']")[:limit]
         return [p for p in (self._parse_card(c) for c in cards) if p]
 
-    def _parse_card(self, card) -> Optional[Product]:
+    def _parse_card(self, card) -> Product | None:
         link = card.find("a", href=True)
         if not link:
             return None
@@ -62,15 +78,15 @@ class OlxScraper(ScraperBase):
         name = title_el.get_text(strip=True)
 
         price_el = card.find(attrs={"data-testid": "ad-price"})
-        price = self.parse_polish_price(price_el.get_text(strip=True) if price_el else "")
+        price = parse_polish_price(price_el.get_text(strip=True) if price_el else "")
         if price is None:
             return None
 
         loc_el = card.find(attrs={"data-testid": "location-date"})
-        location = self._parse_location(loc_el.get_text(strip=True) if loc_el else None)
+        location = _parse_location(loc_el.get_text(strip=True) if loc_el else None)
 
         img = card.find("img")
-        image_url = self._valid_image(img.get("src") if img else None)
+        image_url = _valid_image(img.get("src") if img else None)
 
         return Product(
             name=name,
@@ -82,7 +98,6 @@ class OlxScraper(ScraperBase):
         )
 
     async def _enrich_images(self, products: list[Product]) -> None:
-        """Fetch offer detail pages to retrieve all photos (max 8 concurrent)."""
         sem = asyncio.Semaphore(8)
 
         async def fetch_one(product: Product) -> None:
@@ -90,40 +105,13 @@ class OlxScraper(ScraperBase):
                 try:
                     resp = await self._client.get(product.url, timeout=10.0)
                     if resp.is_success:
-                        product.image_urls = self._extract_detail_images(resp.text)
+                        product.image_urls = _extract_detail_images(resp.text)
                         if product.image_urls and not product.image_url:
                             product.image_url = product.image_urls[0]
-                except Exception:
-                    pass  # image enrichment is best-effort
+                except httpx.HTTPError:
+                    pass
 
         await asyncio.gather(*[fetch_one(p) for p in products])
-
-    @staticmethod
-    def _extract_detail_images(html: str) -> list[str]:
-        soup = BeautifulSoup(html, "lxml")
-        imgs: list[str] = []
-        # OLX detail page: images in swiper/gallery divs
-        for img in soup.select("div[data-testid='ad-photo'] img, .swiper-slide img, [data-cy='ad-photo'] img"):
-            src = img.get("src") or img.get("data-src", "")
-            if src and _NO_THUMBNAIL not in src and src.startswith("http"):
-                # request largest variant: drop size param
-                base = src.split(";s=")[0]
-                if base not in imgs:
-                    imgs.append(base)
-        return imgs
-
-    @staticmethod
-    def _valid_image(src: Optional[str]) -> Optional[str]:
-        if not src or _NO_THUMBNAIL in src:
-            return None
-        return src
-
-
-    @staticmethod
-    def _parse_location(raw: Optional[str]) -> Optional[str]:
-        if not raw:
-            return None
-        return raw.split(" - ")[0].strip()
 
     async def close(self) -> None:
         await self._client.aclose()
