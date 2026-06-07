@@ -1,9 +1,12 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ query }} — Price Aggregator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700&family=Rubik:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --allegro:     #ff6a00;
@@ -14,153 +17,380 @@
       --card: #ffffff;
       --text: #18181b;
       --muted: #71717a;
+      --accent: #2563eb;
       --radius: 10px;
+      --font-body: 'Nunito Sans', system-ui, -apple-system, "Segoe UI", sans-serif;
+      --font-heading: 'Rubik', system-ui, -apple-system, "Segoe UI", sans-serif;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-family: var(--font-body);
       background: var(--bg);
       color: var(--text);
       padding: 28px 20px 60px;
     }
 
-    header { max-width: 1200px; margin: 0 auto 16px; }
-    header h1 { font-size: 1.6rem; font-weight: 700; }
-    header h1 em { font-style: normal; color: #2563eb; }
-    header p { color: var(--muted); margin-top: 4px; font-size: 0.9rem; }
+    /* ── header ── */
+    header {
+      max-width: 1200px;
+      margin: 0 auto 20px;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .back-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: var(--text);
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1rem;
+      white-space: nowrap;
+      transition: color .12s;
+    }
+    .back-link:hover { color: var(--accent); }
+    .back-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+    .back-link svg { flex-shrink: 0; }
+
+    .header-search {
+      flex: 1;
+      display: flex;
+      gap: 8px;
+      min-width: 180px;
+    }
+    .header-search input {
+      flex: 1;
+      padding: 9px 14px;
+      font-size: 0.95rem;
+      font-family: var(--font-body);
+      border: 1.5px solid #d4d4d8;
+      border-radius: var(--radius);
+      transition: border-color .12s, box-shadow .12s;
+    }
+    .header-search input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+    }
+    .header-search button {
+      padding: 9px 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: var(--font-body);
+      transition: background .12s, transform .1s;
+      white-space: nowrap;
+    }
+    .header-search button:hover { background: #1d4ed8; }
+    .header-search button:active { transform: scale(.97); }
+    .header-search button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    #count-label {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 0.875rem;
+    }
+
+    /* ── sticky toolbar ── */
+    .toolbar-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(244,244,245,.96);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border-bottom: 1px solid #e4e4e7;
+      margin: 0 -20px 24px;
+      padding: 10px 20px;
+    }
 
     .toolbar {
-      max-width: 1200px; margin: 0 auto 20px;
-      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .toolbar-group {
-      display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
     .toolbar-label {
-      font-size: 0.75rem; font-weight: 600; color: var(--muted);
-      text-transform: uppercase; letter-spacing: .05em;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
     }
 
     .divider {
-      width: 1px; height: 24px; background: #d4d4d8; flex-shrink: 0;
+      width: 1px;
+      height: 22px;
+      background: #d4d4d8;
+      flex-shrink: 0;
     }
 
-    /* source filter buttons */
     .filter-btn {
-      padding: 5px 13px; border-radius: 20px;
-      border: 1.5px solid #d4d4d8; background: var(--card);
-      cursor: pointer; font-size: 0.8rem; font-weight: 500;
+      padding: 5px 13px;
+      border-radius: 20px;
+      border: 1.5px solid #d4d4d8;
+      background: var(--card);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: var(--font-body);
       transition: background .12s, border-color .12s, color .12s;
       user-select: none;
     }
     .filter-btn:hover { border-color: #a1a1aa; }
-    .filter-btn.active {
-      background: var(--text); border-color: var(--text); color: #fff;
-    }
+    .filter-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .filter-btn.source-active-Ceneo       { background: var(--ceneo);       border-color: var(--ceneo);       color: #fff; }
     .filter-btn.source-active-OLX         { background: var(--olx);         border-color: var(--olx);         color: #fff; }
     .filter-btn.source-active-Sprzedajemy { background: var(--sprzedajemy); border-color: var(--sprzedajemy); color: #fff; }
     .filter-btn.source-active-Allegro     { background: var(--allegro);     border-color: var(--allegro);     color: #fff; }
 
-    /* sort buttons */
     .sort-btn {
-      padding: 5px 13px; border-radius: 20px;
-      border: 1.5px solid #d4d4d8; background: var(--card);
-      cursor: pointer; font-size: 0.8rem; font-weight: 500;
+      padding: 5px 13px;
+      border-radius: 20px;
+      border: 1.5px solid #d4d4d8;
+      background: var(--card);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: var(--font-body);
       transition: background .12s, border-color .12s, color .12s;
       user-select: none;
     }
     .sort-btn:hover { border-color: #a1a1aa; }
+    .sort-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .sort-btn.active { background: var(--text); border-color: var(--text); color: #fff; }
 
+    /* ── grid ── */
     .grid {
-      max-width: 1200px; margin: 0 auto;
+      max-width: 1200px;
+      margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 16px;
     }
 
     .card {
-      background: var(--card); border-radius: var(--radius);
-      overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.07);
-      display: flex; flex-direction: column;
+      background: var(--card);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.07), 0 0 0 1px rgba(0,0,0,.04);
+      display: flex;
+      flex-direction: column;
       transition: transform .15s, box-shadow .15s;
     }
-    .card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.10); }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,.11), 0 0 0 1px rgba(0,0,0,.04); }
     .card[hidden] { display: none !important; }
 
-    /* carousel */
-    .carousel { position: relative; width: 100%; height: 170px; background: #fafafa; overflow: hidden; }
+    /* ── carousel ── */
+    .carousel { position: relative; width: 100%; height: 190px; background: #f8f8f8; overflow: hidden; }
     .carousel-track { display: flex; height: 100%; transition: transform .25s ease; }
-    .carousel-track img { flex-shrink: 0; width: 100%; height: 100%; object-fit: contain; padding: 10px; }
-    .carousel-placeholder { flex-shrink: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: #ccc; }
+    .carousel-track img { flex-shrink: 0; width: 100%; height: 100%; object-fit: contain; padding: 12px; }
+    .carousel-placeholder {
+      flex-shrink: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #d4d4d8;
+    }
     .carousel-btn {
-      position: absolute; top: 50%; transform: translateY(-50%);
-      background: rgba(0,0,0,.35); color: #fff; border: none;
-      width: 26px; height: 26px; border-radius: 50%;
-      font-size: 0.75rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity .15s;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,.4);
+      color: #fff;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity .15s;
     }
     .carousel:hover .carousel-btn { opacity: 1; }
-    .carousel-btn.prev { left: 5px; }
-    .carousel-btn.next { right: 5px; }
-    .carousel-dots { position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; }
+    .carousel-btn.prev { left: 6px; }
+    .carousel-btn.next { right: 6px; }
+    .carousel-dots { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; }
     .carousel-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,.25); transition: background .15s; }
     .carousel-dot.active { background: rgba(0,0,0,.65); }
 
-    .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; gap: 7px; }
-    .badge { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #fff; padding: 2px 8px; border-radius: 4px; align-self: flex-start; }
+    /* badge sits on the image */
+    .badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1;
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: #fff;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
     .badge-Allegro     { background: var(--allegro); }
     .badge-Ceneo       { background: var(--ceneo); }
     .badge-OLX         { background: var(--olx); }
     .badge-Sprzedajemy { background: var(--sprzedajemy); }
 
-    .card-name { font-size: 0.82rem; line-height: 1.4; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .card-price { font-size: 1.25rem; font-weight: 800; color: #dc2626; }
-    .card-meta { font-size: 0.73rem; color: var(--muted); line-height: 1.5; }
+    /* ── card body ── */
+    .card-body { padding: 14px 14px 10px; flex: 1; display: flex; flex-direction: column; gap: 7px; }
 
-    .card-footer { padding: 0 12px 12px; }
-    .card-footer a { display: block; text-align: center; padding: 8px; background: #f4f4f5; border-radius: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text); text-decoration: none; transition: background .12s; }
-    .card-footer a:hover { background: #e4e4e7; }
+    .card-name {
+      font-size: 0.875rem;
+      line-height: 1.45;
+      flex: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-price {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #dc2626;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.01em;
+    }
+    .card-meta { font-size: 0.72rem; color: var(--muted); line-height: 1.6; }
+
+    .card-footer { padding: 10px 14px 14px; }
+    .card-footer a {
+      display: block;
+      text-align: center;
+      padding: 9px 12px;
+      background: var(--accent);
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #fff;
+      text-decoration: none;
+      transition: background .12s, transform .1s;
+    }
+    .card-footer a:hover { background: #1d4ed8; }
+    .card-footer a:active { transform: scale(.98); }
+    .card-footer a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .no-results { max-width: 600px; margin: 60px auto; text-align: center; color: var(--muted); }
+    .no-results-icon { margin-bottom: 16px; color: #d4d4d8; }
+
+    /* ── loading overlay ── */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+    .loading-overlay.active { display: flex; }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #d4d4d8;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    .loading-overlay p { font-size: 0.9rem; color: var(--muted); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .spinner { animation: none; opacity: .6; }
+      .card { transition: none; }
+      .carousel-track { transition: none; }
+      .carousel-dot { transition: none; }
+    }
   </style>
 </head>
 <body>
 
+<div class="loading-overlay" id="loading-overlay" role="status" aria-label=\"Searching…\">
+  <div class="spinner"></div>
+  <p>Searching…</p>
+</div>
+
 <header>
-  <h1>Wyniki dla: <em>{{ query }}</em></h1>
-  <p id="count-label">{{ products | length }} ofert</p>
+  <div class="header-inner">
+    <a href="/" class="back-link" aria-label="Back to home">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M19 12H5"/><path d="m12 5-7 7 7 7"/>
+      </svg>
+      Price Aggregator
+    </a>
+    <form class="header-search" action="/search" method="get" id="header-search-form">
+      <input type="text" name="q" value="{{ query }}" autocomplete="off" aria-label="Search products">
+      <button type="submit">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        Search
+      </button>
+    </form>
+  </div>
+  <p id="count-label">{{ products | length }} results</p>
 </header>
 
 {% if products %}
-<div class="toolbar">
-  <div class="toolbar-group">
-    <span class="toolbar-label">Źródło</span>
-    {% for src in sources %}
-    <button class="filter-btn source-active-{{ src }}" data-source="{{ src }}" onclick="toggleSource('{{ src }}', this)">
-      {{ src }}
-    </button>
-    {% endfor %}
-  </div>
+<div class="toolbar-wrap">
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <span class="toolbar-label">Source</span>
+      {% for src in sources %}
+      <button class="filter-btn source-active-{{ src }}" data-source="{{ src }}" onclick="toggleSource('{{ src }}', this)">
+        {{ src }}
+      </button>
+      {% endfor %}
+    </div>
 
-  <div class="divider"></div>
+    <div class="divider"></div>
 
-  <div class="toolbar-group">
-    <span class="toolbar-label">Sortuj</span>
-    <button class="sort-btn active" data-sort="price-asc"  onclick="setSort('price-asc',  this)">Cena ↑</button>
-    <button class="sort-btn"        data-sort="price-desc" onclick="setSort('price-desc', this)">Cena ↓</button>
-  </div>
+    <div class="toolbar-group">
+      <span class="toolbar-label">Sort</span>
+      <button class="sort-btn active" data-sort="price-asc"  onclick="setSort('price-asc',  this)">Price ↑</button>
+      <button class="sort-btn"        data-sort="price-desc" onclick="setSort('price-desc', this)">Price ↓</button>
+    </div>
 
-  <div class="divider"></div>
+    <div class="divider"></div>
 
-  <div class="toolbar-group">
-    <button class="sort-btn" onclick="exportCSV()">Eksportuj CSV</button>
+    <div class="toolbar-group">
+      <button class="sort-btn" onclick="exportCSV()">Export CSV</button>
+    </div>
   </div>
 </div>
 
@@ -170,6 +400,7 @@
   <div class="card" data-source="{{ p.source }}" data-price="{{ p.price }}">
 
     <div class="carousel" data-index="0">
+      <span class="badge badge-{{ p.source }}">{{ p.source }}</span>
       <div class="carousel-track">
         {% if images %}
           {% for img_url in images %}
@@ -177,32 +408,36 @@
                onerror="this.style.display='none'">
           {% endfor %}
         {% else %}
-          <div class="carousel-placeholder">🛒</div>
+          <div class="carousel-placeholder">
+            <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+          </div>
         {% endif %}
       </div>
       {% if images | length > 1 %}
-      <button class="carousel-btn prev" onclick="slide(this,-1)">&#8249;</button>
-      <button class="carousel-btn next" onclick="slide(this,+1)">&#8250;</button>
-      <div class="carousel-dots">
+      <button class="carousel-btn prev" onclick="slide(this,-1)" aria-label="Previous image">&#8249;</button>
+      <button class="carousel-btn next" onclick="slide(this,+1)" aria-label="Next image">&#8250;</button>
+      <div class="carousel-dots" aria-hidden="true">
         {% for _ in images %}<div class="carousel-dot {% if loop.first %}active{% endif %}"></div>{% endfor %}
       </div>
       {% endif %}
     </div>
 
     <div class="card-body">
-      <span class="badge badge-{{ p.source }}">{{ p.source }}</span>
       <p class="card-name" title="{{ p.name }}">{{ p.name }}</p>
       <div class="card-price">{{ p.price_display }}</div>
       <div class="card-meta">
         {% if p.seller %}{{ p.seller }}<br>{% endif %}
-        Dostawa: {{ p.shipping_display }}
+        Shipping: {{ p.shipping_display }}
         {% if p.condition %} · {{ p.condition_display }}{% endif %}
         {% if p.location %} · {{ p.location }}{% endif %}
       </div>
     </div>
 
     <div class="card-footer">
-      <a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">Zobacz ofertę →</a>
+      <a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">View offer →</a>
     </div>
   </div>
   {% endfor %}
@@ -210,8 +445,12 @@
 
 {% else %}
 <div class="no-results">
-  <p style="font-size:3rem">🔍</p>
-  <p style="margin-top:12px">Brak wyników dla „{{ query }}".</p>
+  <div class="no-results-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+  </div>
+  <p>No results for "{{ query }}".</p>
 </div>
 {% endif %}
 
@@ -219,6 +458,11 @@
   const sources  = new Set({{ sources | tojson }});
   const active   = new Set(sources);
   let   sortMode = 'price-asc';
+
+  document.getElementById('header-search-form').addEventListener('submit', function() {
+    const q = this.querySelector('input[name="q"]').value.trim();
+    if (q) document.getElementById('loading-overlay').classList.add('active');
+  });
 
   function toggleSource(src, btn) {
     if (active.has(src)) {
@@ -228,7 +472,6 @@
       btn.style.background = '';
       btn.style.borderColor = '';
       btn.style.color = '';
-      btn.classList.remove('source-active-' + src);
     } else {
       active.add(src);
       btn.classList.add('source-active-' + src);
@@ -264,25 +507,25 @@
     });
 
     document.getElementById('count-label').textContent =
-      visible + ' ofert' + (visible !== cards.length ? ' (z ' + cards.length + ')' : '');
+      visible + ' results' + (visible !== cards.length ? ' (of ' + cards.length + ')' : '');
   }
 
   function exportCSV() {
-    const rows = [['Nazwa', 'Cena (zł)', 'Dostawa (zł)', 'Źródło', 'Lokalizacja', 'URL']];
+    const rows = [['Name', 'Price (PLN)', 'Shipping (PLN)', 'Source', 'Location', 'URL']];
     document.querySelectorAll('.card:not([hidden])').forEach(card => {
       const name     = card.querySelector('.card-name')?.textContent.trim() ?? '';
       const price    = card.dataset.price ?? '';
       const meta     = card.querySelector('.card-meta')?.textContent ?? '';
       const source   = card.dataset.source ?? '';
       const url      = card.querySelector('.card-footer a')?.href ?? '';
-      const delivery = (meta.match(/Dostawa:\s*([^\n·]+)/) ?? [])[1]?.trim() ?? '';
+      const delivery = (meta.match(/Shipping:\s*([^\n·]+)/) ?? [])[1]?.trim() ?? '';
       const location = (meta.match(/·\s*([^·\n]+)$/) ?? [])[1]?.trim() ?? '';
       rows.push([name, price, delivery, source, location, url]);
     });
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
     const a = document.createElement('a');
     a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
-    a.download = 'wyniki.csv';
+    a.download = 'results.csv';
     a.click();
   }
 
