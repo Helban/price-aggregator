@@ -1,12 +1,3 @@
-"""FastAPI web UI for the price aggregator.
-
-Two input paths converge on one search pipeline:
-  - text:  GET /search?q=...        -> scrapers -> results.html
-  - image: POST /resolve-image      -> Google Vision -> {query}, the browser
-           then fills the search box and submits the same GET /search.
-
-The image endpoint is only a *query resolver*; the scrapers never see an image.
-"""
 import httpx
 from fastapi import FastAPI, Query, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -14,20 +5,18 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from image_search import image_to_query
 from search_service import _env, render_results, search_all
 
-MAX_IMAGE_BYTES = 10 * 1024 * 1024  # 10 MB — generous for screenshots
+MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
 app = FastAPI(title="Price Aggregator")
 
 
 @app.get("/", response_class=HTMLResponse)
 async def index() -> str:
-    """Landing page: search box + image paste/drop zone."""
     return _env.get_template("index.html").render()
 
 
 @app.get("/search", response_class=HTMLResponse)
 async def search(q: str = Query(default="")):
-    """Run the scrapers for a text query and render the results page."""
     query = q.strip()
     if not query:
         return RedirectResponse(url="/", status_code=303)
@@ -37,11 +26,6 @@ async def search(q: str = Query(default="")):
 
 @app.post("/resolve-image")
 async def resolve_image(file: UploadFile):
-    """Turn an uploaded image into a search query via Google Vision.
-
-    Returns {"query": "..."} or {"query": null} when nothing is recognised.
-    The Vision API key stays server-side and is never exposed to the client.
-    """
     if not (file.content_type or "").startswith("image/"):
         return JSONResponse({"error": "Plik musi być obrazem."}, status_code=400)
 

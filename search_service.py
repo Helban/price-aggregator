@@ -1,7 +1,3 @@
-"""Core search pipeline shared by the CLI (main.py) and the web app (app.py).
-
-Holds the scraping, rendering and export logic so both entry points stay thin.
-"""
 import asyncio
 import sys
 from pathlib import Path
@@ -10,13 +6,11 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
 from models import Product
-from scrapers.allegro import AllegroScraper  # noqa: F401  (kept for when DataDome is resolved)
 from scrapers.ceneo import CeneoScraper
 from scrapers.olx import OlxScraper
 from scrapers.sprzedajemy import SprzedajemyScraper
 
-# Build the Jinja environment once at import time — the web app renders on every
-# request, so re-creating it per call (as the old CLI did) would be wasteful.
+# Re-created once at import time — both entry points render on every request
 _env = Environment(
     loader=FileSystemLoader(Path(__file__).parent / "templates"),
     autoescape=True,
@@ -24,9 +18,7 @@ _env = Environment(
 
 
 async def search_all(query: str) -> list[Product]:
-    """Run all active scrapers concurrently and return products sorted by price."""
     scrapers = [
-        # AllegroScraper(),  # blocked by DataDome — to be resolved
         CeneoScraper(),
         OlxScraper(fetch_images=True),
         SprzedajemyScraper(),
@@ -40,28 +32,26 @@ async def search_all(query: str) -> list[Product]:
         for s in scrapers:
             try:
                 await s.close()
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[close error] {type(e).__name__}: {e}", file=sys.stderr)
 
     products: list[Product] = []
-    for r in results:
-        if isinstance(r, Exception):
-            print(f"[scraper error] {r}", file=sys.stderr)
+    for outcome in results:
+        if isinstance(outcome, Exception):
+            print(f"[scraper error] {outcome}", file=sys.stderr)
         else:
-            products.extend(r)
+            products.extend(outcome)
 
     return sorted(products, key=lambda p: p.price)
 
 
 def render_results(query: str, products: list[Product]) -> str:
-    """Render the results page HTML for a query and its products."""
     template = _env.get_template("results.html")
     sources = sorted({p.source for p in products})
     return template.render(query=query, products=products, sources=sources)
 
 
 def export_to_excel(query: str, products: list[Product], path: Path) -> None:
-    """Write products to an .xlsx file with friendly Polish column headers."""
     rows = [
         {
             "Nazwa": p.name,
